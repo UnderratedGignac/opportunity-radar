@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0f1117;
+  --surface: #161b27;
+  --border: #1e2537;
+  --text: #e2e8f0;
+  --muted: #64748b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.score-high  { color: #22c55e; }
+.score-mid   { color: #f59e0b; }
+.score-low   { color: #64748b; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
