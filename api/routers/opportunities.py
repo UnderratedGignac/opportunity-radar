@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import os
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from api.auth import require_customer
@@ -78,11 +81,70 @@ _MOCK_OPPORTUNITIES = [
 Customer = Annotated[dict, Depends(require_customer)]
 
 
+def _flatten_opp(opp: dict) -> dict:
+    """Promote companies.name/domain to top-level, map score_breakdown → signals."""
+    opp = dict(opp)
+    company = opp.get("companies") or {}
+    if company and "company_name" not in opp:
+        opp["company_name"] = company.get("name", "")
+        opp["company_domain"] = company.get("domain", "")
+    # Map score_breakdown → signals array expected by the frontend card
+    if "signals" not in opp or not opp["signals"]:
+        breakdown = opp.get("score_breakdown") or []
+        opp["signals"] = [
+            {
+                "signal": {"type": b.get("type", "news"), "detail": b.get("signal", "")},
+                "base_weight": b.get("base_weight", 0),
+                "recency_multiplier": b.get("recency_multiplier", 1.0),
+                "weighted_score": b.get("weighted", 0),
+            }
+            for b in breakdown
+        ]
+    return opp
+
+
 class FeedbackPayload(BaseModel):
     action: str  # pursued | not_relevant | demo_booked | converted
     deal_size_usd: int | None = None
     days_to_close: int | None = None
     notes: str | None = None
+
+
+@router.get("/export")
+async def export_opps(
+    customer: Customer,
+    min_score: int = Query(60, ge=0, le=100),
+):
+    if not _supabase_ready():
+        opps = [o for o in _MOCK_OPPORTUNITIES if o["opportunity_score"] >= min_score]
+    else:
+        from db.repositories.opportunities import list_opportunities
+        opps = await list_opportunities(min_score=min_score, limit=500, customer_id=customer.get("id"))
+        opps = [_flatten_opp(o) for o in opps]
+
+    output = io.StringIO()
+    fieldnames = ["company_name","company_domain","opportunity_score","confidence_score",
+                  "status","timing_rationale","created_at",
+                  "email_subject","email_body","linkedin_message","call_opener"]
+    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    for opp in opps:
+        raw_outreach = opp.get("outreach") or {}
+        if isinstance(raw_outreach, list):
+            raw_outreach = raw_outreach[0] if raw_outreach else {}
+        row = {k: opp.get(k, "") for k in fieldnames}
+        row["email_subject"] = raw_outreach.get("email_subject", "")
+        row["email_body"] = (raw_outreach.get("email_body", "") or "").replace("\n", " ")
+        row["linkedin_message"] = raw_outreach.get("linkedin_message", "")
+        row["call_opener"] = raw_outreach.get("call_opener", "")
+        writer.writerow(row)
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=opportunities.csv"},
+    )
 
 
 @router.get("")
@@ -98,7 +160,11 @@ async def list_opps(
         return {"data": filtered, "count": len(filtered), "offset": 0, "dev_mode": True}
 
     from db.repositories.opportunities import list_opportunities
-    opps = await list_opportunities(min_score=min_score, status=status_filter, limit=limit, offset=offset)
+    opps = await list_opportunities(
+        min_score=min_score, status=status_filter, limit=limit,
+        offset=offset, customer_id=customer.get("id"),
+    )
+    opps = [_flatten_opp(o) for o in opps]
     return {"data": opps, "count": len(opps), "offset": offset}
 
 
@@ -114,7 +180,7 @@ async def get_opp(opp_id: str, customer: Customer):
     opp = await get_opportunity(opp_id)
     if not opp:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Opportunity not found")
-    return opp
+    return _flatten_opp(opp)
 
 
 @router.patch("/{opp_id}/status")

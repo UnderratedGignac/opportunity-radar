@@ -1,41 +1,38 @@
-"""LLM router — Google Gemini via Bearer token (OAuth access token).
+"""LLM router — delegates to AGY (Antigravity/Gemini CLI) worker.
 
-Set in .env:
-  GEMINI_ACCESS_TOKEN=AQ.Ab8RN6KG-...   (your OAuth token)
+AGY is the local agy.exe binary that auto-manages Google OAuth and uses
+Gemini models under the hood. No API key required — it uses the user's
+existing Google auth from ~/.gemini/oauth_creds.json.
 
-Models used (smallest/fastest):
-  gemini-2.0-flash-lite  — extraction + analysis + composition
+Fallback chain:
+  1. AGY (agy.exe) — free, auto-auth, Gemini-powered
+  2. Gemini HTTP API — if GEMINI_API_KEY is set in .env
+  3. Keyword extraction (callers handle this fallback)
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
+import re
 import time
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from typing import Any
 
 import aiohttp
+
+from tools.agy_bridge import run_task, AgyResult
 
 logger = logging.getLogger(__name__)
 
 _BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 _MODEL = "gemini-2.0-flash-lite"
 
-
-def _token() -> str:
-    t = os.getenv("GEMINI_ACCESS_TOKEN", "")
-    if not t:
-        raise RuntimeError("GEMINI_ACCESS_TOKEN not set in .env")
-    return t
-
-
-def _auth_params() -> dict:
-    """Use API key if set, otherwise fall back to Bearer token."""
-    api_key = os.getenv("GEMINI_API_KEY", "")
-    if api_key:
-        return {"key": api_key}
-    return {}
+# Thread pool for blocking AGY calls (1 worker — avoids concurrent DB conflicts)
+_AGY_POOL = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agy")
 
 
 def _auth_headers() -> dict:
@@ -50,7 +47,11 @@ def _auth_headers() -> dict:
     return headers
 
 
-async def _call(prompt: str, system: str, json_mode: bool) -> str:
+def _has_gemini_key() -> bool:
+    return bool(os.getenv("GEMINI_API_KEY", "") or os.getenv("GEMINI_ACCESS_TOKEN", ""))
+
+
+async def _call_gemini_http(prompt: str, system: str, json_mode: bool) -> str:
     url = f"{_BASE}/{_MODEL}:generateContent"
     payload: dict[str, Any] = {
         "systemInstruction": {"parts": [{"text": system}]},
@@ -58,7 +59,6 @@ async def _call(prompt: str, system: str, json_mode: bool) -> str:
     }
     if json_mode:
         payload["generationConfig"] = {"responseMimeType": "application/json"}
-
     async with aiohttp.ClientSession() as session:
         async with session.post(
             url,
@@ -73,8 +73,79 @@ async def _call(prompt: str, system: str, json_mode: bool) -> str:
             return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
+async def _call_agy(prompt: str, system: str, json_mode: bool) -> str:
+    """Run AGY in a thread pool executor to avoid blocking the event loop."""
+    full_prompt = f"{system}\n\n{prompt}"
+    if json_mode:
+        full_prompt += "\n\nRespond with valid JSON only. No markdown fences."
+
+    loop = asyncio.get_event_loop()
+    fn = partial(run_task, full_prompt, timeout=90)
+    result: AgyResult = await loop.run_in_executor(_AGY_POOL, fn)
+
+    if not result.ok:
+        raise RuntimeError(f"AGY failed: {result.error}")
+
+    return result.text
+
+
+async def _call(prompt: str, system: str, json_mode: bool) -> str:
+    """Try AGY first, then Gemini HTTP API."""
+    try:
+        return await _call_agy(prompt, system, json_mode)
+    except Exception as agy_err:
+        logger.warning("AGY failed (%s), trying Gemini HTTP...", agy_err)
+        if _has_gemini_key():
+            return await _call_gemini_http(prompt, system, json_mode)
+        raise RuntimeError(f"Both AGY and Gemini HTTP unavailable: {agy_err}") from agy_err
+
+
+def _strip_fences(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```"):
+        parts = text.split("```")
+        inner = parts[1] if len(parts) > 1 else text
+        return inner[4:].strip() if inner.startswith("json") else inner.strip()
+    return text
+
+
+def _extract_json_block(text: str) -> str:
+    """Pull first balanced {...} or [...] block from text."""
+    for start_char, end_char in [('{', '}'), ('[', ']')]:
+        idx = text.find(start_char)
+        if idx == -1:
+            continue
+        depth = 0
+        in_str = False
+        escape = False
+        for i, ch in enumerate(text[idx:], idx):
+            if escape:
+                escape = False
+                continue
+            if ch == '\\' and in_str:
+                escape = True
+                continue
+            if ch == '"':
+                in_str = not in_str
+                continue
+            if in_str:
+                continue
+            if ch == start_char:
+                depth += 1
+            elif ch == end_char:
+                depth -= 1
+                if depth == 0:
+                    candidate = text[idx:i + 1]
+                    try:
+                        json.loads(candidate)
+                        return candidate
+                    except json.JSONDecodeError:
+                        break
+    return text
+
+
 class ClaudeRouter:
-    """Gemini Bearer-token router. Same interface used throughout the project."""
+    """LLM router: AGY worker → Gemini HTTP fallback. Same interface throughout."""
 
     _failures = 0
     _broken_until = 0.0
@@ -82,15 +153,12 @@ class ClaudeRouter:
     _BREAK_SECONDS = 60
 
     async def extract(self, prompt: str, system: str) -> dict[str, Any]:
-        """JSON extraction. Returns {} on failure."""
         return await self._query_json(prompt, system)
 
     async def analyze(self, prompt: str, system: str) -> dict[str, Any]:
-        """Analysis — JSON output. Returns {} on failure."""
         return await self._query_json(prompt, system)
 
     async def compose(self, prompt: str, system: str) -> str:
-        """Free-text generation. Returns '' on failure."""
         self._check_circuit()
         try:
             text = await _call(prompt, system, json_mode=False)
@@ -105,13 +173,14 @@ class ClaudeRouter:
         try:
             raw = await _call(prompt, system, json_mode=True)
             raw = _strip_fences(raw.strip())
+            raw = _extract_json_block(raw)
             parsed = json.loads(raw)
             if isinstance(parsed, dict):
                 self._reset_circuit()
                 return parsed
-            logger.warning("Gemini returned non-dict JSON: %s", type(parsed))
+            logger.warning("LLM returned non-dict JSON: %s", type(parsed))
         except json.JSONDecodeError as e:
-            logger.warning("Gemini JSON parse error: %s", e)
+            logger.warning("LLM JSON parse error: %s", e)
         except Exception as e:
             self._record_failure(str(e))
         return {}
@@ -120,7 +189,7 @@ class ClaudeRouter:
         now = time.time()
         if self._failures >= self._BREAK_AFTER and now < self._broken_until:
             remaining = int(self._broken_until - now)
-            raise RuntimeError(f"Gemini circuit open — retry in {remaining}s")
+            raise RuntimeError(f"LLM circuit open — retry in {remaining}s")
         if now >= self._broken_until:
             ClaudeRouter._failures = 0
 
@@ -131,20 +200,6 @@ class ClaudeRouter:
         ClaudeRouter._failures += 1
         if ClaudeRouter._failures >= self._BREAK_AFTER:
             ClaudeRouter._broken_until = time.time() + self._BREAK_SECONDS
-            logger.error(
-                "Gemini circuit tripped after %d failures. Pausing %ds.",
-                ClaudeRouter._failures, self._BREAK_SECONDS,
-            )
+            logger.error("LLM circuit tripped after %d failures. Pausing %ds.", self._failures, self._BREAK_SECONDS)
         else:
-            logger.warning(
-                "Gemini call failed (%d/%d): %s",
-                self._failures, self._BREAK_AFTER, reason,
-            )
-
-
-def _strip_fences(text: str) -> str:
-    if text.startswith("```"):
-        parts = text.split("```")
-        inner = parts[1] if len(parts) > 1 else text
-        return inner[4:].strip() if inner.startswith("json") else inner.strip()
-    return text
+            logger.warning("LLM call failed (%d/%d): %s", self._failures, self._BREAK_AFTER, reason)

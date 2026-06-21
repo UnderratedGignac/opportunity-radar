@@ -20,17 +20,22 @@ from models.signal import Opportunity, Signal, ScoredSignal
 # Base weights per signal type + detail keywords
 _SIGNAL_WEIGHTS: dict[str, dict[str, float]] = {
     "funding": {
-        "series_a": 35, "series_b": 30, "seed": 25, "pre_seed": 10,
+        "series d": 38, "series c": 40, "series a": 35, "series b": 32,
+        "ipo": 32, "went public": 30, "acquisition": 30, "acquired": 28,
+        "merger": 25, "strategic investment": 20,
+        "seed": 22, "pre-seed": 18, "pre_seed": 10,
         "raised": 25, "funding": 20, "default": 20,
     },
     "exec_change": {
         "vp sales": 35, "cro": 35, "chief revenue": 35,
         "cmo": 30, "vp marketing": 30, "chief marketing": 30,
+        "head of sales": 30, "head of revenue": 30, "head of growth": 20,
         "coo": 25, "vp operations": 25, "chief operating": 25,
-        "ceo": 20, "default": 18,
+        "chief of staff": 14, "ceo": 20, "default": 18,
     },
     "hiring": {
         "sdr": 28, "sales development": 28, "account executive": 25,
+        "demand generation": 16, "customer success manager": 18,
         "marketing manager": 22, "revenue operations": 18,
         "customer success": 20, "support": 12, "default": 15,
     },
@@ -40,16 +45,19 @@ _SIGNAL_WEIGHTS: dict[str, dict[str, float]] = {
         "default": 15,
     },
     "website_change": {
-        "pricing": 15, "enterprise": 15, "product": 18, "office": 12, "default": 8,
+        "enterprise": 14, "pricing updated": 13, "pricing": 13,
+        "schedule a demo": 12, "we're hiring": 10, "we are hiring": 10,
+        "product": 18, "office": 12, "default": 8,
     },
     "news": {"default": 10},
 }
 
 _RECENCY_CURVE = [
-    (7, 1.0),
-    (14, 0.85),
-    (30, 0.65),
-    (60, 0.40),
+    (3, 1.0),
+    (7, 0.95),
+    (14, 0.80),
+    (30, 0.60),
+    (60, 0.35),
     (999, 0.15),
 ]
 
@@ -87,9 +95,13 @@ class ScoringAgent(BaseAgent[tuple[CompanyProfile, list[Signal]], Opportunity]):
         n_sources = len({s.signal.source_type for s in scored if s.signal.source_type})
         confidence = min(0.95, (n_sources / 3) * 0.90 + 0.10)
 
-        raw_score = raw_total * fit_mult * confidence
-        # Normalize assuming max raw is ~120 (series A + VP Sales + 3x SDR hiring)
-        normalized = int(min(100, math.floor(raw_score / 1.2)))
+        # Source diversity bonus: 3+ source types boosts score 10%
+        unique_sources = len({s.signal.source_type for s in scored if s.signal.source_type})
+        diversity_mult = 1.1 if unique_sources >= 3 else 1.0
+
+        raw_score = raw_total * fit_mult * confidence * diversity_mult
+        # Normalize: 0.75 factor lets multi-signal companies reach 80+ while single signals stay below 30
+        normalized = int(min(100, math.floor(raw_score * 0.75)))
 
         rationale = await self._get_rationale(company.name, signals, normalized)
 
@@ -102,6 +114,7 @@ class ScoringAgent(BaseAgent[tuple[CompanyProfile, list[Signal]], Opportunity]):
             score_breakdown=[
                 {
                     "signal": s.signal.detail,
+                    "type": s.signal.signal_type.value,
                     "base_weight": s.base_weight,
                     "recency_multiplier": s.recency_multiplier,
                     "weighted": round(s.weighted_score, 2),

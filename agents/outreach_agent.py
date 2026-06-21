@@ -85,19 +85,7 @@ class OutreachAgent(BaseAgent[tuple[Opportunity, dict], OutreachPackage]):
             timing_rationale=opportunity.timing_rationale,
         )
 
-        result = await self._llm.compose(prompt, _OUTREACH_SYSTEM)
-
-        # compose() returns text; parse JSON from it
-        import json
-        copy: dict = {}
-        try:
-            raw = result.strip()
-            if raw.startswith("```"):
-                parts = raw.split("```")
-                raw = parts[1][4:].strip() if parts[1].startswith("json") else parts[1].strip()
-            copy = json.loads(raw)
-        except Exception:
-            pass
+        copy = await self._llm.analyze(prompt, _OUTREACH_SYSTEM)
 
         pkg = OutreachPackage(
             opportunity=opportunity,

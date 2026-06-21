@@ -22,6 +22,7 @@ import aiohttp
 from agents.base_agent import BaseAgent
 from llm.claude_router import ClaudeRouter
 from models.signal import Signal, SignalType
+from scrapers.website_monitor import check_website
 
 logger = logging.getLogger("radar.agent.signal_collection")
 
@@ -82,12 +83,104 @@ class SignalCollectionAgent(BaseAgent[list[str], list[Signal]]):
         tasks = [
             self._scrape_google_news(domain),
             self._scrape_jobs(domain),
+            self._scrape_hackernews(domain),
+            self._scrape_acquisitions(domain),
+            self._scrape_prnewswire(domain),
+            self._scrape_website(domain),
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for r in results:
             if isinstance(r, list):
                 signals.extend(r)
         return signals
+
+    async def _scrape_website(self, domain: str) -> list[Signal]:
+        try:
+            items = await check_website(domain)
+            signals = []
+            for item in items:
+                try:
+                    sig_type = SignalType(item.get("signal_type", "website_change"))
+                except ValueError:
+                    sig_type = SignalType.WEBSITE_CHANGE
+                signals.append(Signal(
+                    company_domain=domain,
+                    signal_type=sig_type,
+                    detail=item.get("detail", ""),
+                    source_url=item.get("source_url", f"https://{domain}"),
+                    source_type="website",
+                    confidence=float(item.get("confidence", 0.6)),
+                ))
+            return signals
+        except Exception as e:
+            logger.warning("Website monitor failed for %s: %s", domain, e)
+            return []
+
+    async def _scrape_hackernews(self, domain: str) -> list[Signal]:
+        company_name = domain.split(".")[0].replace("-", " ").title()
+        encoded = urllib.parse.quote(company_name)
+        url = f"https://hn.algolia.com/api/v1/search?query={encoded}&tags=story&hitsPerPage=5"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=_HEADERS, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                    if resp.status != 200:
+                        return []
+                    data = await resp.json()
+            signals: list[Signal] = []
+            for hit in (data.get("hits") or [])[:5]:
+                text = (hit.get("title") or "") + " " + (hit.get("url") or "")
+                extracted = await self._extract_signals(text, hit.get("url") or url, "hackernews", domain)
+                signals.extend(extracted)
+            return signals
+        except Exception as e:
+            logger.warning("HackerNews scrape failed for %s: %s", domain, e)
+            return []
+
+    async def _scrape_acquisitions(self, domain: str) -> list[Signal]:
+        company_name = domain.split(".")[0].replace("-", " ").title()
+        query = urllib.parse.quote(
+            f'"{company_name}" (acquired OR acquires OR merger OR IPO OR "went public" OR "strategic investment")'
+        )
+        url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=_HEADERS, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                    if resp.status != 200:
+                        return []
+                    xml_text = await resp.text()
+            items = _parse_rss(xml_text)
+            signals: list[Signal] = []
+            for item in items[:3]:
+                text = f"{item['title']} {item['description']}"
+                extracted = await self._extract_signals(text, item["link"], "news", domain)
+                signals.extend(extracted)
+            return signals
+        except Exception as e:
+            logger.warning("Acquisitions scrape failed for %s: %s", domain, e)
+            return []
+
+    async def _scrape_prnewswire(self, domain: str) -> list[Signal]:
+        company_name = domain.split(".")[0].replace("-", " ").title()
+        query = urllib.parse.quote(
+            f'"{company_name}" site:businesswire.com OR site:prnewswire.com'
+        )
+        url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=_HEADERS, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                    if resp.status != 200:
+                        return []
+                    xml_text = await resp.text()
+            items = _parse_rss(xml_text)
+            signals: list[Signal] = []
+            for item in items[:3]:
+                text = f"{item['title']} {item['description']}"
+                extracted = await self._extract_signals(text, item["link"], "press_release", domain)
+                signals.extend(extracted)
+            return signals
+        except Exception as e:
+            logger.warning("PR Newswire scrape failed for %s: %s", domain, e)
+            return []
 
     # ── Google News RSS (free, no key) ────────────────────────────────────────
 

@@ -29,6 +29,7 @@ class ProfileUpdatePayload(BaseModel):
     target_verticals: list[str] | None = None
     target_signals: list[str] | None = None
     slack_webhook: str | None = None
+    slack_webhook_url: str | None = None  # alias — mapped to slack_webhook if column exists
 
 
 class CheckoutPayload(BaseModel):
@@ -69,17 +70,35 @@ async def get_me(customer: Customer):
     if not data:
         raise HTTPException(status_code=404, detail="Customer not found")
     data.pop("api_key_hash", None)
+    # Expose slack_webhook_url as alias for frontend compatibility
+    if "slack_webhook" in data and "slack_webhook_url" not in data:
+        data["slack_webhook_url"] = data["slack_webhook"]
     return data
 
 
 @router.patch("/me")
 async def update_me(payload: ProfileUpdatePayload, customer: Customer):
     updates = payload.model_dump(exclude_none=True)
+    # Map frontend slack_webhook_url → DB column slack_webhook
+    if "slack_webhook_url" in updates:
+        updates["slack_webhook"] = updates.pop("slack_webhook_url")
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
     updated = await update_customer(customer["id"], updates)
     updated.pop("api_key_hash", None)
     return updated
+
+
+@router.post("/slack-test")
+async def test_slack_webhook(payload: dict, customer: Customer):
+    """Send a test Slack message to verify the webhook URL works."""
+    import aiohttp
+    webhook_url = payload.get("webhook_url", "")
+    if not webhook_url.startswith("https://hooks.slack.com/"):
+        raise HTTPException(400, "Invalid Slack webhook URL")
+    async with aiohttp.ClientSession() as session:
+        async with session.post(webhook_url, json={"text": "Opportunity Radar test alert! Your webhook is working."}) as resp:
+            return {"ok": resp.status == 200, "status": resp.status}
 
 
 @router.post("/checkout")

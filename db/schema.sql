@@ -58,6 +58,7 @@ CREATE INDEX IF NOT EXISTS idx_contacts_email   ON contacts(email);
 CREATE TABLE IF NOT EXISTS opportunities (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id          UUID REFERENCES companies(id),
+    customer_id         UUID REFERENCES customers(id),   -- which agency owns this opportunity
     opportunity_score   INT NOT NULL CHECK (opportunity_score BETWEEN 0 AND 100),
     confidence_score    INT NOT NULL CHECK (confidence_score BETWEEN 0 AND 100),
     likely_needs        TEXT[] DEFAULT '{}',
@@ -68,9 +69,14 @@ CREATE TABLE IF NOT EXISTS opportunities (
     created_at          TIMESTAMPTZ DEFAULT NOW(),
     expires_at          TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days'
 );
-CREATE INDEX IF NOT EXISTS idx_opportunities_score   ON opportunities(opportunity_score DESC);
-CREATE INDEX IF NOT EXISTS idx_opportunities_status  ON opportunities(status);
-CREATE INDEX IF NOT EXISTS idx_opportunities_created ON opportunities(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_opportunities_score    ON opportunities(opportunity_score DESC);
+CREATE INDEX IF NOT EXISTS idx_opportunities_status   ON opportunities(status);
+CREATE INDEX IF NOT EXISTS idx_opportunities_created  ON opportunities(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_opportunities_customer ON opportunities(customer_id);
+
+-- MIGRATION (run once in Supabase SQL editor if table already exists):
+-- ALTER TABLE opportunities ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES customers(id);
+-- CREATE INDEX IF NOT EXISTS idx_opportunities_customer ON opportunities(customer_id);
 
 -- ─── OUTREACH ────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS outreach_packages (

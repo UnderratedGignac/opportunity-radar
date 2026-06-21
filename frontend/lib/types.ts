@@ -56,6 +56,16 @@ export interface Customer {
   plan: Plan
   agency_specialty?: string
   target_verticals?: string[]
-  slack_webhook?: string
+  slack_webhook_url?: string
   status: 'active' | 'churned' | 'paused'
+}
+
+export interface ScanStatus {
+  id: string
+  domains: string[]
+  status: 'running' | 'complete' | 'error'
+  started_at: string
+  completed_at: string | null
+  found: number
+  error: string | null
 }

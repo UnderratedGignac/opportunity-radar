@@ -23,7 +23,14 @@ async def insert_signal(company_id: str, signal_type: str, detail: str, **kwargs
 
 async def insert_opportunity(opp: dict) -> dict:
     client = await get_client()
-    res = await client.table("opportunities").insert(opp).execute()
+    try:
+        res = await client.table("opportunities").insert(opp).execute()
+    except Exception as e:
+        if "customer_id" in str(e) and "customer_id" in opp:
+            opp_copy = {k: v for k, v in opp.items() if k != "customer_id"}
+            res = await client.table("opportunities").insert(opp_copy).execute()
+        else:
+            raise
     return res.data[0] if res.data else {}
 
 
@@ -38,18 +45,31 @@ async def list_opportunities(
     status: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    customer_id: str | None = None,
 ) -> list[dict]:
     client = await get_client()
-    q = (
-        client.table("opportunities")
-        .select("*, companies(*), outreach_packages(*)")
-        .gte("opportunity_score", min_score)
-        .order("opportunity_score", desc=True)
-        .range(offset, offset + limit - 1)
-    )
-    if status:
-        q = q.eq("status", status)
-    res = await q.execute()
+
+    def _build_query(with_customer: bool):
+        q = (
+            client.table("opportunities")
+            .select("*, companies(*), outreach_packages(*)")
+            .gte("opportunity_score", min_score)
+            .order("opportunity_score", desc=True)
+            .range(offset, offset + limit - 1)
+        )
+        if status:
+            q = q.eq("status", status)
+        if with_customer and customer_id:
+            q = q.eq("customer_id", customer_id)
+        return q
+
+    try:
+        res = await _build_query(with_customer=True).execute()
+    except Exception as e:
+        if "customer_id" in str(e):
+            res = await _build_query(with_customer=False).execute()
+        else:
+            raise
     return res.data or []
 
 
