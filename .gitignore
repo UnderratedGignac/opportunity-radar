@@ -16,3 +16,15 @@ node_modules/
 *.db-shm
 *.db-wal
 .DS_Store
+
+# Discovery pipeline — generated outputs (not source code)
+discovery/candidates.json
+discovery/candidates_general.json
+discovery/unified_candidates.json
+discovery/final_records.json
+discovery/validator_output.json
+discovery/hiring_companies.csv
+discovery/companies.csv
+discovery/positions.csv
+discovery/agy_work/
+discovery/__pycache__/

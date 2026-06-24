@@ -25,7 +25,7 @@ import re as _re
 import time
 import uuid as _uuid
 from collections import defaultdict
-from datetime import datetime as _dt
+from datetime import datetime as _dt, timezone
 
 from fastapi import HTTPException, UploadFile, File
 
@@ -48,7 +48,7 @@ def _new_scan(domains: list[str]) -> str:
     sid = _uuid.uuid4().hex[:12]
     _scans[sid] = {
         "id": sid, "domains": domains, "status": "running",
-        "started_at": _dt.utcnow().isoformat(),
+        "started_at": _dt.now(timezone.utc).isoformat(),
         "completed_at": None, "found": 0, "error": None,
     }
     return sid
@@ -58,7 +58,7 @@ def _finish_scan(sid: str, found: int = 0, error: str | None = None) -> None:
     if sid in _scans:
         _scans[sid].update({
             "status": "error" if error else "complete",
-            "completed_at": _dt.utcnow().isoformat(),
+            "completed_at": _dt.now(timezone.utc).isoformat(),
             "found": found, "error": error,
         })
 
@@ -72,12 +72,18 @@ class ScanRequest(BaseModel):
     min_score: int = 60
 
 
-def _build_pipeline(customer: dict) -> CompanyPipeline:
+async def _build_pipeline(customer: dict) -> CompanyPipeline:
+    from db.repositories.opportunities import get_signal_weights
     llm = ClaudeRouter()
+    try:
+        db_weights_raw = await get_signal_weights()
+        weights = ScoringAgent.weights_from_db_rows(db_weights_raw) if db_weights_raw else None
+    except Exception:
+        weights = None  # fall back to hardcoded defaults if DB unreachable
     return CompanyPipeline(
         collector=SignalCollectionAgent(llm=llm),
         intelligence=IntelligenceAgent(llm=llm),
-        scorer=ScoringAgent(llm=llm),
+        scorer=ScoringAgent(llm=llm, weights=weights),
         outreach=OutreachAgent(
             llm=llm,
             agency_name=customer.get("agency_name", settings.AGENCY_NAME),
@@ -91,7 +97,7 @@ async def _run_scan_and_persist(domains: list[str], min_score: int, customer: di
     count = 0
     error_msg = None
     try:
-        pipeline = _build_pipeline(customer)
+        pipeline = await _build_pipeline(customer)
         orchestrator = RadarOrchestrator(pipeline, concurrency=3)
         companies = [CompanyProfile(name=d.split(".")[0].title(), domain=d) for d in domains]
         packages = await orchestrator.run_batch(companies)

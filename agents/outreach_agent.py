@@ -86,6 +86,10 @@ class OutreachAgent(BaseAgent[tuple[Opportunity, dict], OutreachPackage]):
         )
 
         copy = await self._llm.analyze(prompt, _OUTREACH_SYSTEM)
+        if not copy.get("email_subject"):
+            raise RuntimeError(
+                f"Outreach generation failed for {opportunity.company_name} — LLM returned empty response"
+            )
 
         pkg = OutreachPackage(
             opportunity=opportunity,

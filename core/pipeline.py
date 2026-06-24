@@ -77,15 +77,14 @@ class CompanyPipeline:
             raw_contacts = await get_contacts(company.domain)
             contacts = []
             for c in raw_contacts:
-                name_parts = (c.get("name") or "").split(" ", 1)
                 contacts.append(Contact(
-                    first_name=name_parts[0] if name_parts else None,
-                    last_name=name_parts[1] if len(name_parts) > 1 else None,
+                    first_name=c.get("first_name"),
+                    last_name=c.get("last_name"),
                     title=c.get("title", ""),
                     email=c.get("email"),
                     linkedin_url=c.get("linkedin_url"),
                     company_domain=company.domain,
-                    source="apollo",
+                    source=c.get("source", "pattern_inference"),
                 ))
             package = await self._outreach.run((opportunity, intel))
             package.contacts = contacts

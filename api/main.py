@@ -54,16 +54,18 @@ app.include_router(billing_webhooks.router)
 
 @app.get("/health")
 async def health():
-    import subprocess
+    import subprocess, os
     try:
-        agy = subprocess.run(["agy.exe", "--help"], capture_output=True, timeout=3)
-        agy_ok = agy.returncode == 0
+        proc = subprocess.run(["agy.exe", "--help"], capture_output=True, timeout=3)
+        agy_ok = proc.returncode == 0
     except Exception:
         agy_ok = False
     return {
         "status": "ok",
         "service": "opportunity-radar",
         "agy_worker": "available" if agy_ok else "unavailable",
+        "supabase_configured": bool(os.getenv("SUPABASE_URL")),
+        "gemini_configured": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_ACCESS_TOKEN")),
     }
 
 

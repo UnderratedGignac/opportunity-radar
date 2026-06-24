@@ -9,12 +9,16 @@ load_dotenv()
 
 
 class Settings:
-    # AI (Google Gemini via OAuth Bearer token)
+    # AI (Google Gemini via AGY worker or OAuth Bearer token)
     GEMINI_ACCESS_TOKEN: str = os.getenv("GEMINI_ACCESS_TOKEN", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
     # Database (Supabase free tier)
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
+
+    # Signal sources
+    BING_API_KEY: str = os.getenv("BING_API_KEY", "")
 
     # Email notifications (Gmail SMTP — optional, free)
     SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
@@ -41,8 +45,8 @@ class Settings:
     @classmethod
     def validate(cls) -> list[str]:
         missing = []
-        if not cls.GEMINI_ACCESS_TOKEN:
-            missing.append("GEMINI_ACCESS_TOKEN")
+        if not cls.GEMINI_ACCESS_TOKEN and not cls.GEMINI_API_KEY:
+            missing.append("GEMINI_ACCESS_TOKEN or GEMINI_API_KEY")
         if not cls.SUPABASE_URL:
             missing.append("SUPABASE_URL")
         if not cls.SUPABASE_KEY:

@@ -1,6 +1,25 @@
 -- AI Opportunity Radar — PostgreSQL Schema (Supabase-ready)
 -- Deploy to: Supabase SQL editor or `psql -f schema.sql`
 
+-- ─── CUSTOMERS (must come first — referenced by opportunities FK) ─────────────
+CREATE TABLE IF NOT EXISTS customers (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agency_name         TEXT NOT NULL,
+    owner_name          TEXT,
+    email               TEXT UNIQUE NOT NULL,
+    plan                TEXT DEFAULT 'pilot',   -- 'pilot','growth','scale'
+    mrr_cents           INT DEFAULT 0,
+    target_verticals    TEXT[] DEFAULT '{}',
+    target_signals      TEXT[] DEFAULT '{}',
+    agency_specialty    TEXT,
+    slack_webhook       TEXT,
+    api_key_hash        TEXT UNIQUE,
+    stripe_customer_id  TEXT,
+    status              TEXT DEFAULT 'active',  -- 'active','churned','paused'
+    created_at          TIMESTAMPTZ DEFAULT NOW(),
+    churned_at          TIMESTAMPTZ
+);
+
 -- ─── COMPANIES ────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS companies (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -74,10 +93,6 @@ CREATE INDEX IF NOT EXISTS idx_opportunities_status   ON opportunities(status);
 CREATE INDEX IF NOT EXISTS idx_opportunities_created  ON opportunities(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_opportunities_customer ON opportunities(customer_id);
 
--- MIGRATION (run once in Supabase SQL editor if table already exists):
--- ALTER TABLE opportunities ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES customers(id);
--- CREATE INDEX IF NOT EXISTS idx_opportunities_customer ON opportunities(customer_id);
-
 -- ─── OUTREACH ────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS outreach_packages (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -88,25 +103,6 @@ CREATE TABLE IF NOT EXISTS outreach_packages (
     call_opener     TEXT,
     key_hook        TEXT,
     created_at      TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ─── CUSTOMERS ───────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS customers (
-    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agency_name         TEXT NOT NULL,
-    owner_name          TEXT,
-    email               TEXT UNIQUE NOT NULL,
-    plan                TEXT DEFAULT 'pilot',   -- 'pilot','growth','scale'
-    mrr_cents           INT DEFAULT 0,
-    target_verticals    TEXT[] DEFAULT '{}',
-    target_signals      TEXT[] DEFAULT '{}',
-    agency_specialty    TEXT,
-    slack_webhook       TEXT,
-    api_key_hash        TEXT UNIQUE,
-    stripe_customer_id  TEXT,
-    status              TEXT DEFAULT 'active',  -- 'active','churned','paused'
-    created_at          TIMESTAMPTZ DEFAULT NOW(),
-    churned_at          TIMESTAMPTZ
 );
 
 -- ─── FEEDBACK (the moat) ─────────────────────────────────────────────────────

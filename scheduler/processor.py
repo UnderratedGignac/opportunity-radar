@@ -53,10 +53,16 @@ async def run_daily_scan() -> None:
         return
 
     llm = ClaudeRouter()
+    from db.repositories.opportunities import get_signal_weights
+    try:
+        db_weights_raw = await get_signal_weights()
+        weights = ScoringAgent.weights_from_db_rows(db_weights_raw) if db_weights_raw else None
+    except Exception:
+        weights = None
     pipeline = CompanyPipeline(
-        collector=SignalCollectionAgent(llm=llm, ),
+        collector=SignalCollectionAgent(llm=llm),
         intelligence=IntelligenceAgent(llm=llm),
-        scorer=ScoringAgent(llm=llm),
+        scorer=ScoringAgent(llm=llm, weights=weights),
         outreach=OutreachAgent(llm=llm),
     )
     orchestrator = RadarOrchestrator(pipeline, concurrency=settings.PIPELINE_CONCURRENCY)

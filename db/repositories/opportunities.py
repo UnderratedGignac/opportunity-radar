@@ -75,14 +75,17 @@ async def list_opportunities(
 
 async def get_opportunity(opp_id: str) -> dict | None:
     client = await get_client()
-    res = (
-        await client.table("opportunities")
-        .select("*, companies(*), outreach_packages(*)")
-        .eq("id", opp_id)
-        .single()
-        .execute()
-    )
-    return res.data
+    try:
+        res = (
+            await client.table("opportunities")
+            .select("*, companies(*), outreach_packages(*)")
+            .eq("id", opp_id)
+            .single()
+            .execute()
+        )
+        return res.data
+    except Exception:
+        return None
 
 
 async def update_opportunity_status(opp_id: str, status: str) -> dict:

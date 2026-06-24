@@ -7,27 +7,33 @@ from db.supabase_client import get_client
 
 async def get_customer_by_email(email: str) -> dict | None:
     client = await get_client()
-    res = (
-        await client.table("customers")
-        .select("*")
-        .eq("email", email)
-        .eq("status", "active")
-        .single()
-        .execute()
-    )
-    return res.data
+    try:
+        res = (
+            await client.table("customers")
+            .select("*")
+            .eq("email", email)
+            .eq("status", "active")
+            .single()
+            .execute()
+        )
+        return res.data
+    except Exception:
+        return None
 
 
 async def get_customer(customer_id: str) -> dict | None:
     client = await get_client()
-    res = (
-        await client.table("customers")
-        .select("*")
-        .eq("id", customer_id)
-        .single()
-        .execute()
-    )
-    return res.data
+    try:
+        res = (
+            await client.table("customers")
+            .select("*")
+            .eq("id", customer_id)
+            .single()
+            .execute()
+        )
+        return res.data
+    except Exception:
+        return None
 
 
 async def create_customer(data: dict) -> dict:
@@ -60,11 +66,14 @@ async def list_active_customers() -> list[dict]:
 
 async def get_customer_by_stripe_id(stripe_id: str) -> dict | None:
     client = await get_client()
-    res = (
-        await client.table("customers")
-        .select("*")
-        .eq("stripe_customer_id", stripe_id)
-        .single()
-        .execute()
-    )
-    return res.data
+    try:
+        res = (
+            await client.table("customers")
+            .select("*")
+            .eq("stripe_customer_id", stripe_id)
+            .single()
+            .execute()
+        )
+        return res.data
+    except Exception:
+        return None

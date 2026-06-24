@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -26,7 +26,7 @@ class Signal(BaseModel):
     detail: str
     source_url: str | None = None
     source_type: str | None = None
-    detected_at: datetime = Field(default_factory=datetime.utcnow)
+    detected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     confidence: float = Field(ge=0.0, le=1.0, default=0.5)
     raw_data: dict[str, Any] = Field(default_factory=dict)
 
@@ -49,7 +49,7 @@ class Opportunity(BaseModel):
     decision_maker_titles: list[str] = Field(default_factory=list)
     timing_rationale: str = ""
     score_breakdown: list[dict[str, Any]] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: datetime | None = None
 
 

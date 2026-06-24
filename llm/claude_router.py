@@ -1,13 +1,12 @@
-"""LLM router — delegates to AGY (Antigravity/Gemini CLI) worker.
+"""LLM router — AGY worker (Gemini) with HTTP API fallback.
 
-AGY is the local agy.exe binary that auto-manages Google OAuth and uses
-Gemini models under the hood. No API key required — it uses the user's
-existing Google auth from ~/.gemini/oauth_creds.json.
+Primary: AGY (agy.exe) — uses local Google OAuth, no key required.
+Fallback: Gemini HTTP API — if GEMINI_API_KEY or GEMINI_ACCESS_TOKEN is set.
 
-Fallback chain:
-  1. AGY (agy.exe) — free, auto-auth, Gemini-powered
-  2. Gemini HTTP API — if GEMINI_API_KEY is set in .env
-  3. Keyword extraction (callers handle this fallback)
+Model aliases (callers may import these):
+  HAIKU  — fast extraction tier
+  SONNET — reasoning / copy tier
+  OPUS   — deep analysis tier
 """
 
 from __future__ import annotations
@@ -16,7 +15,6 @@ import asyncio
 import json
 import logging
 import os
-import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -28,12 +26,19 @@ from tools.agy_bridge import run_task, AgyResult
 
 logger = logging.getLogger(__name__)
 
-_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-_MODEL = "gemini-2.0-flash-lite"
+# Model name aliases — used by callers (e.g. learning_agent imports SONNET)
+HAIKU  = "gemini-2.0-flash-lite"
+SONNET = "gemini-2.0-flash"
+OPUS   = "gemini-2.0-flash"
 
-# Thread pool for blocking AGY calls (1 worker — avoids concurrent DB conflicts)
+_BASE  = "https://generativelanguage.googleapis.com/v1beta/models"
+_MODEL = HAIKU
+
+# Single-worker thread pool — avoids concurrent subprocess spawning issues
 _AGY_POOL = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agy")
 
+
+# ── Auth helpers ──────────────────────────────────────────────────────────────
 
 def _auth_headers() -> dict:
     headers: dict = {"Content-Type": "application/json"}
@@ -51,8 +56,10 @@ def _has_gemini_key() -> bool:
     return bool(os.getenv("GEMINI_API_KEY", "") or os.getenv("GEMINI_ACCESS_TOKEN", ""))
 
 
-async def _call_gemini_http(prompt: str, system: str, json_mode: bool) -> str:
-    url = f"{_BASE}/{_MODEL}:generateContent"
+# ── LLM backends ─────────────────────────────────────────────────────────────
+
+async def _call_gemini_http(prompt: str, system: str, json_mode: bool, model: str = HAIKU) -> str:
+    url = f"{_BASE}/{model}:generateContent"
     payload: dict[str, Any] = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -74,31 +81,29 @@ async def _call_gemini_http(prompt: str, system: str, json_mode: bool) -> str:
 
 
 async def _call_agy(prompt: str, system: str, json_mode: bool) -> str:
-    """Run AGY in a thread pool executor to avoid blocking the event loop."""
     full_prompt = f"{system}\n\n{prompt}"
     if json_mode:
         full_prompt += "\n\nRespond with valid JSON only. No markdown fences."
-
     loop = asyncio.get_event_loop()
     fn = partial(run_task, full_prompt, timeout=90)
     result: AgyResult = await loop.run_in_executor(_AGY_POOL, fn)
-
     if not result.ok:
         raise RuntimeError(f"AGY failed: {result.error}")
-
     return result.text
 
 
-async def _call(prompt: str, system: str, json_mode: bool) -> str:
-    """Try AGY first, then Gemini HTTP API."""
+async def _call(prompt: str, system: str, json_mode: bool, model: str = HAIKU) -> str:
+    """Try AGY first, fall back to Gemini HTTP API."""
     try:
         return await _call_agy(prompt, system, json_mode)
     except Exception as agy_err:
         logger.warning("AGY failed (%s), trying Gemini HTTP...", agy_err)
         if _has_gemini_key():
-            return await _call_gemini_http(prompt, system, json_mode)
+            return await _call_gemini_http(prompt, system, json_mode, model=model)
         raise RuntimeError(f"Both AGY and Gemini HTTP unavailable: {agy_err}") from agy_err
 
+
+# ── JSON helpers ──────────────────────────────────────────────────────────────
 
 def _strip_fences(text: str) -> str:
     text = text.strip()
@@ -144,34 +149,41 @@ def _extract_json_block(text: str) -> str:
     return text
 
 
-class ClaudeRouter:
-    """LLM router: AGY worker → Gemini HTTP fallback. Same interface throughout."""
+# ── Router ────────────────────────────────────────────────────────────────────
 
-    _failures = 0
-    _broken_until = 0.0
+class ClaudeRouter:
+    """AGY-powered LLM router with Gemini HTTP fallback."""
+
     _BREAK_AFTER = 5
     _BREAK_SECONDS = 60
 
+    def __init__(self) -> None:
+        self._failures = 0
+        self._broken_until = 0.0
+
     async def extract(self, prompt: str, system: str) -> dict[str, Any]:
-        return await self._query_json(prompt, system)
+        """Fast structured extraction — HAIKU tier."""
+        return await self._query_json(prompt, system, model=HAIKU)
 
     async def analyze(self, prompt: str, system: str) -> dict[str, Any]:
-        return await self._query_json(prompt, system)
+        """Deep reasoning — SONNET tier."""
+        return await self._query_json(prompt, system, model=SONNET)
 
     async def compose(self, prompt: str, system: str) -> str:
+        """Long-form text generation — SONNET tier."""
         self._check_circuit()
         try:
-            text = await _call(prompt, system, json_mode=False)
+            text = await _call(prompt, system, json_mode=False, model=SONNET)
             self._reset_circuit()
             return text.strip()
         except Exception as e:
             self._record_failure(str(e))
             return ""
 
-    async def _query_json(self, prompt: str, system: str) -> dict[str, Any]:
+    async def _query_json(self, prompt: str, system: str, model: str = HAIKU) -> dict[str, Any]:
         self._check_circuit()
         try:
-            raw = await _call(prompt, system, json_mode=True)
+            raw = await _call(prompt, system, json_mode=True, model=model)
             raw = _strip_fences(raw.strip())
             raw = _extract_json_block(raw)
             parsed = json.loads(raw)
@@ -191,15 +203,21 @@ class ClaudeRouter:
             remaining = int(self._broken_until - now)
             raise RuntimeError(f"LLM circuit open — retry in {remaining}s")
         if now >= self._broken_until:
-            ClaudeRouter._failures = 0
+            self._failures = 0
 
     def _reset_circuit(self) -> None:
-        ClaudeRouter._failures = 0
+        self._failures = 0
 
     def _record_failure(self, reason: str) -> None:
-        ClaudeRouter._failures += 1
-        if ClaudeRouter._failures >= self._BREAK_AFTER:
-            ClaudeRouter._broken_until = time.time() + self._BREAK_SECONDS
-            logger.error("LLM circuit tripped after %d failures. Pausing %ds.", self._failures, self._BREAK_SECONDS)
+        self._failures += 1
+        if self._failures >= self._BREAK_AFTER:
+            self._broken_until = time.time() + self._BREAK_SECONDS
+            logger.error(
+                "LLM circuit tripped after %d failures. Pausing %ds.",
+                self._failures, self._BREAK_SECONDS,
+            )
         else:
-            logger.warning("LLM call failed (%d/%d): %s", self._failures, self._BREAK_AFTER, reason)
+            logger.warning(
+                "LLM call failed (%d/%d): %s",
+                self._failures, self._BREAK_AFTER, reason,
+            )

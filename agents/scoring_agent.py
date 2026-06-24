@@ -81,9 +81,35 @@ class ScoringAgent(BaseAgent[tuple[CompanyProfile, list[Signal]], Opportunity]):
 
     name = "scoring"
 
-    def __init__(self, llm: ClaudeRouter | None = None) -> None:
+    def __init__(
+        self,
+        llm: ClaudeRouter | None = None,
+        weights: dict[str, dict[str, float]] | None = None,
+    ) -> None:
         super().__init__()
         self._llm = llm or ClaudeRouter()
+        self._weights = weights if weights is not None else _SIGNAL_WEIGHTS
+
+    @staticmethod
+    def weights_from_db_rows(db_rows: dict[str, float]) -> dict[str, dict[str, float]]:
+        """Convert DB signal_weights rows (dot-notation) into the scoring weights dict format.
+
+        DB format:   {"funding.series_a": 35.0, "exec_change.vp_sales": 35.0}
+        Scoring fmt: {"funding": {"series a": 35.0, ...}, "exec_change": {"vp sales": 35.0, ...}}
+
+        Merges over a deep copy of the hardcoded defaults so uncalibrated signals keep their baseline.
+        """
+        import copy
+        merged = copy.deepcopy(_SIGNAL_WEIGHTS)
+        for key, weight in db_rows.items():
+            if "." not in key:
+                continue
+            signal_type, keyword_raw = key.split(".", 1)
+            keyword = keyword_raw.replace("_", " ")
+            if signal_type not in merged:
+                merged[signal_type] = {"default": 10}
+            merged[signal_type][keyword] = weight
+        return merged
 
     async def run(self, payload: tuple[CompanyProfile, list[Signal]]) -> Opportunity:
         company, signals = payload
@@ -137,7 +163,7 @@ class ScoringAgent(BaseAgent[tuple[CompanyProfile, list[Signal]], Opportunity]):
         )
 
     def _base_weight(self, signal: Signal) -> float:
-        type_weights = _SIGNAL_WEIGHTS.get(signal.signal_type.value, {"default": 10})
+        type_weights = self._weights.get(signal.signal_type.value, {"default": 10})
         detail_lower = signal.detail.lower()
         for keyword, weight in type_weights.items():
             if keyword != "default" and keyword in detail_lower:
