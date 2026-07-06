@@ -7,8 +7,17 @@ export const meta = {
   ],
 }
 
-// args = array of candidate company objects: {company, website, careers_url, positions, signal, ...}
-const CANDIDATES = Array.isArray(args) ? args : (args && args.companies) || []
+// args = array of candidate company objects OR a file path string to candidates_slim.json
+let CANDIDATES = []
+if (Array.isArray(args)) {
+  CANDIDATES = args
+} else if (args && args.companies) {
+  CANDIDATES = args.companies
+} else if (typeof args === 'string') {
+  // file path: have an agent read it so we don't need FS access in the script
+  const raw = await agent(`Read the file at this exact path and return ONLY the raw JSON array contents, nothing else: ${args}`, { label: 'load-candidates', effort: 'low' })
+  try { CANDIDATES = JSON.parse(raw) } catch (_) { CANDIDATES = [] }
+}
 
 const SCHEMA = {
   type: 'object',

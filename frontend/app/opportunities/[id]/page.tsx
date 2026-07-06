@@ -1,13 +1,13 @@
 'use client'
 
-import { use, useState } from 'react'
+import { useState } from 'react'
 import useSWR from 'swr'
 import { ScoreBadge } from '../../../components/ScoreBadge'
 import { SignalChip } from '../../../components/SignalChip'
 import { api } from '../../../lib/api'
 
-export default function OpportunityDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function OpportunityDetail({ params }: { params: { id: string } }) {
+  const { id } = params
   const { data: opp, error, isLoading } = useSWR(id ? ['opportunity', id] : null, ([, i]) => api.opportunities.get(i))
   const [copied, setCopied] = useState<string | null>(null)
 

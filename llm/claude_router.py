@@ -1,12 +1,15 @@
-"""LLM router — AGY worker (Gemini) with HTTP API fallback.
+"""LLM router — Anthropic Claude API, with a local AGY (Gemini CLI) fallback.
 
-Primary: AGY (agy.exe) — uses local Google OAuth, no key required.
-Fallback: Gemini HTTP API — if GEMINI_API_KEY or GEMINI_ACCESS_TOKEN is set.
+Provider selection (env `LLM_PROVIDER` overrides; default is automatic):
+  anthropic — when ANTHROPIC_API_KEY is set (Claude Haiku/Sonnet tiers)
+  agy       — otherwise: inference through the locally installed agy.exe
+              (Antigravity / Gemini CLI). No API key required.
 
 Model aliases (callers may import these):
-  HAIKU  — fast extraction tier
-  SONNET — reasoning / copy tier
-  OPUS   — deep analysis tier
+  HAIKU  — fast extraction tier  (claude-haiku-4-5-20251001)
+  SONNET — reasoning / copy tier (claude-sonnet-4-6)
+  OPUS   — deep analysis tier    (claude-sonnet-4-6, same for now)
+On the AGY provider all tiers map to the CLI's Gemini model.
 """
 
 from __future__ import annotations
@@ -16,91 +19,35 @@ import json
 import logging
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 from typing import Any
 
-import aiohttp
+import anthropic
 
-from tools.agy_bridge import run_task, AgyResult
+from llm import agy_provider
 
 logger = logging.getLogger(__name__)
 
+
+def active_provider() -> str:
+    """Which LLM backend this process will use."""
+    forced = os.getenv("LLM_PROVIDER", "").strip().lower()
+    if forced in ("anthropic", "agy"):
+        return forced
+    return "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "agy"
+
 # Model name aliases — used by callers (e.g. learning_agent imports SONNET)
-HAIKU  = "gemini-2.0-flash-lite"
-SONNET = "gemini-2.0-flash"
-OPUS   = "gemini-2.0-flash"
+HAIKU  = "claude-haiku-4-5-20251001"
+SONNET = "claude-sonnet-4-6"
+OPUS   = "claude-sonnet-4-6"
 
-_BASE  = "https://generativelanguage.googleapis.com/v1beta/models"
-_MODEL = HAIKU
-
-# Single-worker thread pool — avoids concurrent subprocess spawning issues
-_AGY_POOL = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agy")
+_MAX_TOKENS = 1024
 
 
-# ── Auth helpers ──────────────────────────────────────────────────────────────
-
-def _auth_headers() -> dict:
-    headers: dict = {"Content-Type": "application/json"}
-    api_key = os.getenv("GEMINI_API_KEY", "")
-    if api_key:
-        headers["x-goog-api-key"] = api_key
-    else:
-        token = os.getenv("GEMINI_ACCESS_TOKEN", "")
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-    return headers
-
-
-def _has_gemini_key() -> bool:
-    return bool(os.getenv("GEMINI_API_KEY", "") or os.getenv("GEMINI_ACCESS_TOKEN", ""))
-
-
-# ── LLM backends ─────────────────────────────────────────────────────────────
-
-async def _call_gemini_http(prompt: str, system: str, json_mode: bool, model: str = HAIKU) -> str:
-    url = f"{_BASE}/{model}:generateContent"
-    payload: dict[str, Any] = {
-        "systemInstruction": {"parts": [{"text": system}]},
-        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-    }
-    if json_mode:
-        payload["generationConfig"] = {"responseMimeType": "application/json"}
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            url,
-            json=payload,
-            headers=_auth_headers(),
-            timeout=aiohttp.ClientTimeout(total=60),
-        ) as resp:
-            if resp.status != 200:
-                body = await resp.text()
-                raise RuntimeError(f"Gemini HTTP {resp.status}: {body[:300]}")
-            data = await resp.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"]
-
-
-async def _call_agy(prompt: str, system: str, json_mode: bool) -> str:
-    full_prompt = f"{system}\n\n{prompt}"
-    if json_mode:
-        full_prompt += "\n\nRespond with valid JSON only. No markdown fences."
-    loop = asyncio.get_event_loop()
-    fn = partial(run_task, full_prompt, timeout=90)
-    result: AgyResult = await loop.run_in_executor(_AGY_POOL, fn)
-    if not result.ok:
-        raise RuntimeError(f"AGY failed: {result.error}")
-    return result.text
-
-
-async def _call(prompt: str, system: str, json_mode: bool, model: str = HAIKU) -> str:
-    """Try AGY first, fall back to Gemini HTTP API."""
-    try:
-        return await _call_agy(prompt, system, json_mode)
-    except Exception as agy_err:
-        logger.warning("AGY failed (%s), trying Gemini HTTP...", agy_err)
-        if _has_gemini_key():
-            return await _call_gemini_http(prompt, system, json_mode, model=model)
-        raise RuntimeError(f"Both AGY and Gemini HTTP unavailable: {agy_err}") from agy_err
+def _client() -> anthropic.AsyncAnthropic:
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY is not set — add it to .env")
+    return anthropic.AsyncAnthropic(api_key=api_key)
 
 
 # ── JSON helpers ──────────────────────────────────────────────────────────────
@@ -149,10 +96,33 @@ def _extract_json_block(text: str) -> str:
     return text
 
 
+# ── LLM backend ───────────────────────────────────────────────────────────────
+
+async def _call(prompt: str, system: str, json_mode: bool, model: str = HAIKU) -> str:
+    if json_mode:
+        # Ask the model to respond with JSON only
+        prompt = prompt + "\n\nRespond with valid JSON only. No markdown fences."
+
+    if active_provider() == "agy":
+        # Local Gemini CLI worker — blocking subprocess, run off the event loop.
+        return await asyncio.to_thread(agy_provider.generate, prompt, system)
+
+    client = _client()
+    kwargs: dict[str, Any] = {}
+    message = await client.messages.create(
+        model=model,
+        max_tokens=_MAX_TOKENS,
+        system=system,
+        messages=[{"role": "user", "content": prompt}],
+        **kwargs,
+    )
+    return message.content[0].text
+
+
 # ── Router ────────────────────────────────────────────────────────────────────
 
 class ClaudeRouter:
-    """AGY-powered LLM router with Gemini HTTP fallback."""
+    """Anthropic Claude LLM router with circuit breaker."""
 
     _BREAK_AFTER = 5
     _BREAK_SECONDS = 60

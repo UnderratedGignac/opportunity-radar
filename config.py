@@ -9,9 +9,8 @@ load_dotenv()
 
 
 class Settings:
-    # AI (Google Gemini via AGY worker or OAuth Bearer token)
-    GEMINI_ACCESS_TOKEN: str = os.getenv("GEMINI_ACCESS_TOKEN", "")
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    # AI (Anthropic Claude)
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 
     # Database (Supabase free tier)
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
@@ -44,9 +43,11 @@ class Settings:
 
     @classmethod
     def validate(cls) -> list[str]:
+        from shutil import which
         missing = []
-        if not cls.GEMINI_ACCESS_TOKEN and not cls.GEMINI_API_KEY:
-            missing.append("GEMINI_ACCESS_TOKEN or GEMINI_API_KEY")
+        # LLM: an Anthropic key OR the local Gemini CLI (agy) will do.
+        if not cls.ANTHROPIC_API_KEY and not which(os.getenv("AGY_EXE", "agy.exe")):
+            missing.append("ANTHROPIC_API_KEY (or install the agy CLI)")
         if not cls.SUPABASE_URL:
             missing.append("SUPABASE_URL")
         if not cls.SUPABASE_KEY:

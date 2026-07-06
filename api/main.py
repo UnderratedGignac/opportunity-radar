@@ -54,18 +54,16 @@ app.include_router(billing_webhooks.router)
 
 @app.get("/health")
 async def health():
-    import subprocess, os
-    try:
-        proc = subprocess.run(["agy.exe", "--help"], capture_output=True, timeout=3)
-        agy_ok = proc.returncode == 0
-    except Exception:
-        agy_ok = False
+    import os
+    from llm import agy_provider
+    from llm.claude_router import active_provider
+    provider = active_provider()
     return {
         "status": "ok",
         "service": "opportunity-radar",
-        "agy_worker": "available" if agy_ok else "unavailable",
+        "llm_provider": provider,
+        "llm_ready": bool(os.getenv("ANTHROPIC_API_KEY")) if provider == "anthropic" else agy_provider.available(),
         "supabase_configured": bool(os.getenv("SUPABASE_URL")),
-        "gemini_configured": bool(os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_ACCESS_TOKEN")),
     }
 
 

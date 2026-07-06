@@ -7,7 +7,7 @@ B2B buying-intent signal detection for AI automation agencies. Scans funding eve
 | Layer | Tech |
 |---|---|
 | Backend API | FastAPI + Python 3.11 |
-| AI | Claude Haiku 4.5 (extraction) + Sonnet 4.6 (reasoning/copy) |
+| AI | Provider-agnostic router: Claude Haiku (extraction) + Sonnet (reasoning/copy) when `ANTHROPIC_API_KEY` is set, otherwise the local Gemini CLI (`agy`) — no API key needed |
 | Database | Supabase (PostgreSQL) |
 | Frontend | Next.js 14 App Router + Tailwind CSS |
 | Notifications | Resend (email) + Slack webhooks |
@@ -54,9 +54,9 @@ See `.env.example` for the full list. Required keys:
 
 | Variable | Where to get it |
 |---|---|
-| `ANTHROPIC_API_KEY` | console.anthropic.com |
+| `ANTHROPIC_API_KEY` | console.anthropic.com — optional if the `agy` Gemini CLI is installed (the router falls back to it) |
 | `SUPABASE_URL` | Supabase project settings |
-| `SUPABASE_ANON_KEY` | Supabase project settings |
+| `SUPABASE_KEY` | Supabase project settings (anon key) |
 | `BING_API_KEY` | Azure portal (Bing Search v7) |
 | `RESEND_API_KEY` | resend.com |
 | `STRIPE_SECRET_KEY` | Stripe dashboard |

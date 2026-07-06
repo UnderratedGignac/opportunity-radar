@@ -1,9 +1,11 @@
 # Python
 venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
 .env
+.pytest_cache/
 
 # Node
 node_modules/
@@ -19,7 +21,10 @@ node_modules/
 
 # Discovery pipeline — generated outputs (not source code)
 discovery/candidates.json
+discovery/candidates_compact.json
+discovery/candidates_slim.json
 discovery/candidates_general.json
+discovery/validate_workflow_embedded.js
 discovery/unified_candidates.json
 discovery/final_records.json
 discovery/validator_output.json
