@@ -19,7 +19,7 @@ import csv
 import inspect
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
@@ -28,6 +28,7 @@ logger = logging.getLogger("radar.report")
 CSV_COLUMNS = [
     "Company",
     "Score",
+    "Confidence",
     "Signals",
     "FundingDetail",
     "GTMOpenRoles",
@@ -279,21 +280,46 @@ def likely_need(candidate: dict) -> str:
 # Narrative templates (pure — built from actual signal facts)
 # --------------------------------------------------------------------------
 
-def _fmt_date(raw) -> str:
+def _parse_dt(raw) -> datetime | None:
     if not raw:
-        return ""
+        return None
     s = str(raw).strip()
-    dt = None
     try:
-        dt = parsedate_to_datetime(s)  # RFC-822 (RSS pubDate)
+        return parsedate_to_datetime(s)  # RFC-822 (RSS pubDate)
     except (TypeError, ValueError):
         pass
-    if dt is None:
-        try:
-            dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
-        except ValueError:
-            return ""
-    return f"{dt:%b} {dt.day}"
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _fmt_date(raw) -> str:
+    dt = _parse_dt(raw)
+    return f"{dt:%b} {dt.day}" if dt else ""
+
+
+def confidence_label(score: int) -> str:
+    """Customers buy confidence, not scores: High / Medium / Low."""
+    if score >= 70:
+        return "High"
+    if score >= 45:
+        return "Medium"
+    return "Low"
+
+
+def outreach_window(candidate: dict, now: datetime | None = None) -> str:
+    """How soon to reach out: fresh funding means the budget window is open."""
+    now = now or datetime.now(timezone.utc)
+    best = _best_funding(candidate)
+    if best:
+        dt = _parse_dt(best.get("published_at") or best.get("filed_at"))
+        if dt is not None:
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            if (now - dt).days <= 10:
+                return "within 14 days — budget decisions are being made now"
+    return "within 30 days"
 
 
 def _fmt_amount(amount_millions: float) -> str:
@@ -441,6 +467,7 @@ def suggested_contact_title(candidate: dict) -> str:
 # --------------------------------------------------------------------------
 
 def _signal_bullets(entry: dict) -> list[str]:
+    """Evidence trail: every ranking reason, checkable via its source link."""
     bullets: list[str] = []
     for event in entry.get("funding") or []:
         url = event.get("source_url") or ""
@@ -448,12 +475,12 @@ def _signal_bullets(entry: dict) -> list[str]:
             "SEC EDGAR" if "sec.gov" in url else "source"
         )
         detail = event.get("detail") or _funding_phrase(event)
-        bullets.append(f"**Funding:** {detail}" + (f" ([{source}]({url}))" if url else ""))
+        bullets.append(f"✓ **Funding:** {detail}" + (f" ([{source}]({url}))" if url else ""))
 
     job_board = entry.get("job_board") or {}
     gtm_jobs = job_board.get("gtm_jobs") or 0
     if gtm_jobs:
-        text = f"**GTM hiring:** {gtm_jobs} open go-to-market role{'s' if gtm_jobs != 1 else ''}"
+        text = f"✓ **GTM hiring:** {gtm_jobs} open go-to-market role{'s' if gtm_jobs != 1 else ''}"
         roles = _join_roles(job_board.get("roles") or [])
         if roles:
             text += f" — {roles}"
@@ -465,10 +492,19 @@ def _signal_bullets(entry: dict) -> list[str]:
     for post in entry.get("hiring") or []:
         detail = post.get("detail") or "Hiring post"
         url = post.get("source_url") or ""
-        bullets.append(f"**HN hiring:** {detail}" + (f" ([post]({url}))" if url else ""))
+        bullets.append(f"✓ **HN hiring:** {detail}" + (f" ([post]({url}))" if url else ""))
 
-    if not bullets:
-        bullets.append("No individual signal details captured.")
+    negatives = entry.get("negative_news") or []
+    if negatives:
+        first = negatives[0]
+        url = first.get("source_url") or ""
+        bullets.append(
+            f"⚠ **Layoff check:** recent layoffs/hiring-freeze reported — approach with caution"
+            + (f" ([source]({url}))" if url else "")
+        )
+    else:
+        bullets.append("✓ **Layoff check:** none detected in the last 90 days of news")
+
     return bullets
 
 
@@ -494,13 +530,16 @@ def render_markdown(entries: list[dict], generated_on: str) -> str:
     for i, entry in enumerate(entries, 1):
         rank = entry.get("rank", i)
         score = entry.get("score", score_company(entry))
-        lines.append(f"## {rank}. {entry.get('name', 'Unknown')} — {score}/100")
+        confidence = entry.get("confidence") or confidence_label(score)
+        lines.append(f"## {rank}. {entry.get('name', 'Unknown')} — {confidence} confidence")
         lines.append("")
         lines.extend(f"- {bullet}" for bullet in _signal_bullets(entry))
         lines.append("")
         lines.append(f"**Why now:** {entry.get('why_now') or why_now(entry)}")
         lines.append("")
         lines.append(f"**Likely need:** {entry.get('likely_need') or likely_need(entry)}")
+        lines.append("")
+        lines.append(f"**Recommended outreach:** {entry.get('outreach_window') or outreach_window(entry)}")
         lines.append("")
         lines.append(f"**Who to contact:** {_contact_line(entry)}")
         lines.append("")
@@ -553,9 +592,11 @@ def render_csv_rows(entries: list[dict]) -> list[dict]:
             links.append(careers)
 
         funding_events = entry.get("funding") or []
+        score = entry.get("score", score_company(entry))
         rows.append({
             "Company": entry.get("name", ""),
-            "Score": entry.get("score", score_company(entry)),
+            "Score": score,
+            "Confidence": entry.get("confidence") or confidence_label(score),
             "Signals": "; ".join(signals),
             "FundingDetail": funding_events[0].get("detail", "") if funding_events else "",
             "GTMOpenRoles": job_board.get("gtm_jobs") or 0,
@@ -566,6 +607,54 @@ def render_csv_rows(entries: list[dict]) -> list[dict]:
             "SuggestedOpener": entry.get("opener") or suggested_opener(entry),
         })
     return rows
+
+
+TRACKING_COLUMNS = [
+    "Company", "ReportDate", "Signals", "Confidence",
+    "AgencyContacted", "Reply", "Meeting", "ClosedDeal",
+]
+
+
+def append_tracking(entries: list[dict], path: Path | str, report_date: str) -> None:
+    """Append this report's companies to the outcome log (idempotent per
+    company+date). Once ~50-100 outreach outcomes are filled in, scoring
+    weights can become evidence-based instead of argued."""
+    path = Path(path)
+    seen: set[tuple[str, str]] = set()
+    if path.exists():
+        with path.open(newline="", encoding="utf-8") as fh:
+            for row in csv.DictReader(fh):
+                seen.add((row.get("Company", ""), row.get("ReportDate", "")))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not path.exists()
+    with path.open("a", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=TRACKING_COLUMNS)
+        if write_header:
+            writer.writeheader()
+        for entry in entries:
+            name = entry.get("name", "")
+            if not name or (name, report_date) in seen:
+                continue
+            score = entry.get("score", score_company(entry))
+            signals = []
+            if entry.get("funding"):
+                signals.append("funding")
+            if (entry.get("job_board") or {}).get("gtm_jobs"):
+                signals.append("gtm_hiring")
+            if entry.get("hiring"):
+                signals.append("hn_hiring")
+            if entry.get("negative_news"):
+                signals.append("negative_news")
+            writer.writerow({
+                "Company": name,
+                "ReportDate": report_date,
+                "Signals": "; ".join(signals),
+                "Confidence": entry.get("confidence") or confidence_label(score),
+                "AgencyContacted": "",
+                "Reply": "",
+                "Meeting": "",
+                "ClosedDeal": "",
+            })
 
 
 def write_report(entries: list[dict], out_dir: str, generated_on: str) -> tuple[Path, Path]:
@@ -595,8 +684,10 @@ async def build_report(days: int = 7, top: int = 12) -> list[dict]:
     entries = rank_candidates(candidates)[:top]
     for rank, entry in enumerate(entries, 1):
         entry["rank"] = rank
+        entry["confidence"] = confidence_label(entry["score"])
         entry["why_now"] = why_now(entry)
         entry["likely_need"] = likely_need(entry)
+        entry["outreach_window"] = outreach_window(entry)
         entry["opener"] = suggested_opener(entry)
     return entries
 
@@ -615,7 +706,10 @@ def main(argv: list[str] | None = None) -> int:
 
     generated_on = datetime.now().strftime("%Y-%m-%d")
     md_path, csv_path = write_report(entries, args.out, generated_on)
+    tracking_path = Path(args.out) / "tracking.csv"
+    append_tracking(entries, tracking_path, generated_on)
     print(f"Wrote {md_path} and {csv_path} ({len(entries)} companies)")
+    print(f"Outcome log: {tracking_path} — fill in Reply/Meeting/ClosedDeal as outreach lands")
     return 0
 
 

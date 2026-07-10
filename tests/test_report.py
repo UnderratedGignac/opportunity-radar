@@ -210,6 +210,45 @@ def test_score_negative_news_penalty():
     assert report.score_company(cand) == 20  # 50 - 30: layoffs kill the window
 
 
+# ---------------------------------------------------------------- customer framing
+
+def test_confidence_label_bands():
+    assert report.confidence_label(90) == "High"
+    assert report.confidence_label(70) == "High"
+    assert report.confidence_label(50) == "Medium"
+    assert report.confidence_label(45) == "Medium"
+    assert report.confidence_label(30) == "Low"
+
+
+def test_outreach_window_fresh_funding_is_14_days():
+    from datetime import datetime, timezone
+    now = datetime(2026, 7, 9, tzinfo=timezone.utc)
+    fresh = {"name": "A", "funding": [_funding_event()], "hiring": []}  # pubDate Jul 7
+    assert "14 days" in report.outreach_window(fresh, now=now)
+
+    stale = {"name": "B", "funding": [_funding_event(published_at="Mon, 15 Jun 2026 10:00:00 GMT")], "hiring": []}
+    assert "30 days" in report.outreach_window(stale, now=now)
+
+    hiring_only = {"name": "C", "funding": [], "hiring": [_hiring_post()]}
+    assert "30 days" in report.outreach_window(hiring_only, now=now)
+
+
+def test_append_tracking_writes_and_dedupes(tmp_path):
+    path = tmp_path / "tracking.csv"
+    entries = _entries()
+    report.append_tracking(entries, path, report_date="2026-07-10")
+    report.append_tracking(entries, path, report_date="2026-07-10")  # idempotent
+    lines = path.read_text(encoding="utf-8").strip().splitlines()
+    assert lines[0].startswith("Company,ReportDate,Signals,Confidence")
+    assert "AgencyContacted" in lines[0] and "ClosedDeal" in lines[0]
+    assert len(lines) == 1 + len(entries)  # header + one row per company, no dupes
+
+    # a new report date appends fresh rows for outcome comparison over time
+    report.append_tracking(entries, path, report_date="2026-07-17")
+    lines = path.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1 + 2 * len(entries)
+
+
 # ---------------------------------------------------------------- likely_need
 
 def test_likely_need_exec_gtm():
@@ -318,14 +357,28 @@ def test_render_markdown_contains_required_sections():
 
     assert "AI Opportunity Radar — Weekly Buying-Intent Report" in md
     assert "2026-07-08" in md
-    assert "## 1. Oratomic — 100/100" in md
-    assert "## 2. Beta Robotics — 45/100" in md
+    # customers buy confidence + evidence, not raw scores
+    assert "## 1. Oratomic — High confidence" in md
+    assert "## 2. Beta Robotics — Medium confidence" in md
+    assert "100/100" not in md
+    assert "✓" in md  # evidence checkmarks
+    assert "**Layoff check:**" in md  # the negative screen is visible trust-building
     assert _REAL_LINK in md  # source link preserved
     assert "https://boards.greenhouse.io/oratomic" in md  # careers link
     assert "**Why now:**" in md
     assert "**Likely need:**" in md
+    assert "**Recommended outreach:**" in md
     assert "**Who to contact:**" in md
     assert "**Suggested opener:**" in md
+
+
+def test_render_markdown_flags_layoffs_with_warning():
+    entry = _entries()[0]
+    entry["negative_news"] = [{"detail": "Oratomic announces layoffs", "negative": True,
+                               "source_url": "https://example.com/l"}]
+    md = report.render_markdown([entry], generated_on="2026-07-08")
+    assert "⚠" in md
+    assert "layoff" in md.lower()
     # footer: methodology + attribution
     assert "SEC EDGAR" in md
     assert "Hacker News" in md
@@ -337,9 +390,9 @@ def test_render_csv_rows_columns_and_values():
 
     assert len(rows) == 2
     expected_cols = [
-        "Company", "Score", "Signals", "FundingDetail", "GTMOpenRoles",
-        "LikelyNeed", "Domain", "SourceLinks", "SuggestedContactTitle",
-        "SuggestedOpener",
+        "Company", "Score", "Confidence", "Signals", "FundingDetail",
+        "GTMOpenRoles", "LikelyNeed", "Domain", "SourceLinks",
+        "SuggestedContactTitle", "SuggestedOpener",
     ]
     for row in rows:
         assert list(row.keys()) == expected_cols
@@ -347,6 +400,7 @@ def test_render_csv_rows_columns_and_values():
     ora = rows[0]
     assert ora["Company"] == "Oratomic"
     assert ora["Score"] == 100
+    assert ora["Confidence"] == "High"
     assert "funding" in ora["Signals"]
     assert ora["GTMOpenRoles"] == 4
     assert ora["LikelyNeed"]  # non-empty fit line
@@ -367,4 +421,4 @@ def test_write_report_creates_both_files(tmp_path):
     md = md_path.read_text(encoding="utf-8")
     assert "Oratomic" in md
     csv_text = csv_path.read_text(encoding="utf-8")
-    assert csv_text.splitlines()[0].startswith("Company,Score,Signals")
+    assert csv_text.splitlines()[0].startswith("Company,Score,Confidence,Signals")
