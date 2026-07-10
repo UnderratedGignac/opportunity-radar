@@ -12,7 +12,9 @@ from scrapers.mena_jobs import (
     classify_automatable_role,
     company_website_from_linkedin,
     extract_company_industry,
+    extract_company_size,
     find_leads,
+    is_enterprise_by_size,
     is_low_value_company,
     is_software_company,
     parse_job_cards,
@@ -31,6 +33,10 @@ def _company_html() -> str:
 
 def _software_company_html() -> str:
     return (FIXTURES / "mena_linkedin_company_software.html").read_text(encoding="utf-8")
+
+
+def _enterprise_company_html() -> str:
+    return (FIXTURES / "mena_linkedin_company_enterprise.html").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------- parse_job_cards
@@ -124,6 +130,23 @@ def test_is_software_company_name_fallback_when_industry_unknown():
     assert is_software_company("Al Fajer Travel & Tourism LLC", industry=None) is False
 
 
+# ---------------------------------------------------------------- company-size filter (catches enterprises name-blocklists miss)
+
+def test_extract_company_size():
+    assert extract_company_size(_company_html()) == "201-500 employees"
+    assert extract_company_size(_enterprise_company_html()) == "10,001+ employees"
+    assert extract_company_size("<html>no size field</html>") is None
+
+
+def test_is_enterprise_by_size():
+    assert is_enterprise_by_size("10,001+ employees") is True
+    assert is_enterprise_by_size("1,001-5,000 employees") is True
+    assert is_enterprise_by_size("501-1,000 employees") is False  # borderline, kept
+    assert is_enterprise_by_size("11-50 employees") is False
+    assert is_enterprise_by_size("2-10 employees") is False
+    assert is_enterprise_by_size(None) is False  # unknown size never excludes on its own
+
+
 async def test_find_leads_excludes_software_companies():
     async def fake_fetch(session, url, chrome=False):
         if "seeMoreJobPostings" in url:
@@ -142,6 +165,28 @@ async def test_find_leads_excludes_software_companies():
             {"title": "Admin Assistant", "company": "Logos Software Solutions",
              "company_slug": "logos-software", "company_linkedin_url": "https://ae.linkedin.com/company/logos",
              "location": "Dubai, United Arab Emirates", "country": "United Arab Emirates", "job_url": "https://x/1"},
+        ]):
+            leads = await find_leads(["admin"], ["United Arab Emirates"], per_search=5)
+    assert leads == []
+
+
+async def test_find_leads_excludes_enterprise_by_size():
+    # a company that dodges every name-based blocklist (e.g. Kempinski Hotels)
+    # must still be excluded once its LinkedIn "Company size" reveals 10,001+
+    async def fake_fetch(session, url, chrome=False):
+        if "seeMoreJobPostings" in url:
+            return _jobs_html()
+        if "/company/" in url:
+            return _enterprise_company_html()
+        return None
+
+    with patch("scrapers.mena_jobs._fetch_text", fake_fetch), \
+         patch("scrapers.mena_jobs.classify_automatable_role",
+               lambda title: {"category": "admin", "pain": "p", "package": "pkg"}):
+        with patch("scrapers.mena_jobs.parse_job_cards", lambda html: [
+            {"title": "Spa Receptionist", "company": "Kempinski Hotels",
+             "company_slug": "kempinski-hotels", "company_linkedin_url": "https://ae.linkedin.com/company/kempinski-hotels",
+             "location": "Dubai, United Arab Emirates", "country": "United Arab Emirates", "job_url": "https://x/2"},
         ]):
             leads = await find_leads(["admin"], ["United Arab Emirates"], per_search=5)
     assert leads == []

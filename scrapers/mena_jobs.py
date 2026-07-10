@@ -25,8 +25,18 @@ import aiohttp
 logger = logging.getLogger("radar.scraper.mena_jobs")
 
 _HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; OpportunityRadar/1.0; eliehaddadh1@gmail.com)"}
-_CHROME_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"}
+_CHROME_UA = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 _TIMEOUT = aiohttp.ClientTimeout(total=15)
+
+
+def _normalize_company_url(url: str) -> str:
+    """Force the www. subdomain: country subdomains (ae./lb./it....) serve
+    localized (e.g. Arabic) field labels that the English-label parser can't
+    read, even though the underlying data is identical."""
+    return re.sub(r'https://[a-z]{2,3}\.linkedin\.com/', 'https://www.linkedin.com/', url)
 
 _SEARCH_URL = (
     "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
@@ -74,11 +84,22 @@ _AGENCY_MARKERS = [
     "guildhall", "rtc-1", "robert half", "jobs for humanity", "career", "headhunt", "outsourc",
 ]
 # large enterprises that run their own automation teams — wrong size for a freelancer
+# (belt-and-suspenders: is_enterprise_by_size() is the durable catch-all via
+# LinkedIn's own headcount field; this list is a fast pre-fetch shortcut)
 _ENTERPRISE_MARKERS = [
     "saipem", "gems education", "nmdc", "azadea", "nextcare", "unilever", "nestle", "pepsi",
     "aramco", "adnoc", "emirates", "etisalat", "majid al futtaim", "chalhoub", "landmark group",
     "careem", "talabat", "noon", "aldar", "emaar", "damac", "siemens", "schneider", "accenture",
     "deloitte", "kpmg", "pwc", "ey ", "government", "ministry", "municipality", "authority",
+    "kempinski", "radisson", "marriott", "hilton", "accor", "hyatt", "rotana", "intercontinental",
+]
+# NGOs / int'l orgs / government-adjacent — wrong ICP regardless of size (not a
+# freelance-automation buyer; different budget process and buying behavior)
+_NGO_MARKERS = [
+    "reliefweb", "united nations", "unicef", "unhcr", "unrwa", "undp", "unfpa", "ocha",
+    "world food programme", "wfp ", "red cross", "red crescent", "ifrc", "icrc",
+    "world health organization", "who ", "embassy", "consulate", " ngo", "non-profit",
+    "nonprofit", "foundation for", "humanitarian",
 ]
 
 # "skip LOGOS": exclude software/tech companies — they build automation in-house
@@ -98,14 +119,60 @@ _SOFTWARE_NAME_MARKERS = [
 ]
 
 
+_DT_DD_RE = re.compile(r'<dt[^>]*>(.*?)</dt>\s*<dd[^>]*>(.*?)</dd>', re.DOTALL)
+
+
+def _parse_about_fields(page_html: str) -> dict[str, str]:
+    """Generic label -> value map from a LinkedIn company about page.
+
+    LinkedIn's guest markup has no stable data-test-id for these fields (that
+    was a wrong assumption from an earlier version of this module); the only
+    reliable structure is plain <dt>Label</dt><dd>Value</dd> pairs. Labels are
+    only in English when the page is fetched via www.linkedin.com with an
+    English Accept-Language header — country subdomains (ae./lb./it....)
+    localize the labels, so callers MUST normalize the URL first (see
+    _normalize_company_url).
+    """
+    if not page_html:
+        return {}
+    fields: dict[str, str] = {}
+    for label_html, value_html in _DT_DD_RE.findall(page_html):
+        label = _clean(label_html).lower()
+        if label and label not in fields:
+            fields[label] = _clean(value_html)
+    return fields
+
+
 def extract_company_industry(page_html: str) -> str | None:
     """Extract the 'Industry' field from a LinkedIn company about page."""
-    if not page_html:
-        return None
-    m = re.search(
-        r'about-us__industry"[^>]*>.*?<dd[^>]*>\s*(.*?)\s*</dd>', page_html, re.DOTALL
-    )
-    return _clean(m.group(1)) if m else None
+    return _parse_about_fields(page_html).get("industry") or None
+
+
+def extract_company_size(page_html: str) -> str | None:
+    """Extract the 'Company size' field (e.g. '11-50 employees')."""
+    return _parse_about_fields(page_html).get("company size") or None
+
+
+_SIZE_UPPER_RE = re.compile(r'([\d,]+)\s*(?:employees)?\s*$')
+
+
+def is_enterprise_by_size(size_text: str | None) -> bool:
+    """True once LinkedIn's own headcount says >1,000 employees.
+
+    Catches multinationals a name blocklist will never fully enumerate (e.g.
+    Kempinski Hotels) without needing per-brand entries. Unknown size never
+    excludes on its own — a small company with a blank profile is still a
+    valid lead.
+    """
+    if not size_text:
+        return False
+    text = size_text.replace(",", "").lower()
+    if "+" in text:
+        return True  # "10001+ employees"
+    numbers = re.findall(r'\d+', text)
+    if not numbers:
+        return False
+    return int(numbers[-1]) > 1000
 
 
 def is_software_company(name: str, industry: str | None = None) -> bool:
@@ -133,9 +200,9 @@ def classify_automatable_role(title: str) -> dict | None:
 
 
 def is_low_value_company(name: str, slug: str) -> bool:
-    """True for anonymous listings, staffing agencies, and big enterprises."""
-    blob = f"{name} {slug}".lower()
-    return any(m in blob for m in _AGENCY_MARKERS + _ENTERPRISE_MARKERS)
+    """True for anonymous listings, staffing agencies, big enterprises, and NGOs/int'l orgs."""
+    blob = f" {name} {slug} ".lower()
+    return any(m in blob for m in _AGENCY_MARKERS + _ENTERPRISE_MARKERS + _NGO_MARKERS)
 
 
 # ── parsing ───────────────────────────────────────────────────────────────────
@@ -179,20 +246,36 @@ def parse_job_cards(page_html: str) -> list[dict]:
     return cards
 
 
+_URL_IN_TEXT_RE = re.compile(r'https?://[^\s]+')
 _REDIRECT_RE = re.compile(r'redir/redirect\?url=([^"&]+)')
 
 
 def company_website_from_linkedin(page_html: str) -> str | None:
-    """Extract the real company website from a LinkedIn company page."""
+    """Extract the real company website from a LinkedIn company page.
+
+    Prefers the visible URL text in the 'Website' field (e.g. the dd renders
+    'http://www.acme.com External link for Acme') over decoding the wrapped
+    redir/redirect href — simpler and avoids grabbing an unrelated redirect
+    link elsewhere on the page.
+    """
     if not page_html:
         return None
+    from scrapers.email_finder import normalize_domain
+
+    website_field = _parse_about_fields(page_html).get("website")
+    if website_field:
+        m = _URL_IN_TEXT_RE.search(website_field)
+        if m:
+            domain = normalize_domain(m.group(0))
+            if domain:
+                return domain
+
+    # fallback: decode the wrapped redirect href (older/variant markup)
     m = _REDIRECT_RE.search(page_html)
     if not m:
         return None
-    # LinkedIn double-encodes; unquote twice and normalise
     url = urllib.parse.unquote(urllib.parse.unquote(m.group(1)))
     url = url.replace("%2E", ".").replace("%2F", "/")
-    from scrapers.email_finder import normalize_domain
     domain = normalize_domain(url)
     return domain or None
 
@@ -246,16 +329,22 @@ async def find_leads(
                     seen.add(key)
                     website = None
                     industry = None
-                    co_page = await _fetch_text(session, card["company_linkedin_url"] + "/", chrome=True)
+                    company_size = None
+                    co_url = _normalize_company_url(card["company_linkedin_url"]) + "/"
+                    co_page = await _fetch_text(session, co_url, chrome=True)
                     if co_page:
                         website = company_website_from_linkedin(co_page)
                         industry = extract_company_industry(co_page)
+                        company_size = extract_company_size(co_page)
                     if is_software_company(card["company"], industry=industry):
+                        continue
+                    if is_enterprise_by_size(company_size):
                         continue
                     leads.append({
                         "company": card["company"],
                         "website": website,
                         "industry": industry,
+                        "company_size": company_size,
                         "role_title": card["title"],
                         "category": role["category"],
                         "pain": role["pain"],
