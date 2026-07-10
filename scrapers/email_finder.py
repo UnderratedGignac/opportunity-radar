@@ -16,6 +16,7 @@ import asyncio
 import html
 import logging
 import re
+import smtplib
 import subprocess
 
 import aiohttp
@@ -24,7 +25,13 @@ logger = logging.getLogger("radar.scraper.email_finder")
 
 _HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; OpportunityRadar/1.0; eliehaddadh1@gmail.com)"}
 _TIMEOUT = aiohttp.ClientTimeout(total=10)
-_CONTACT_PATHS = ["", "/contact", "/contact-us", "/about", "/company", "/get-in-touch"]
+# imprint/impressum and privacy/terms pages legally must carry a contact email
+# in many jurisdictions, so they are the best source when the site hides it
+_CONTACT_PATHS = [
+    "", "/contact", "/contact-us", "/get-in-touch", "/about", "/about-us",
+    "/company", "/team", "/our-team", "/people", "/imprint", "/impressum",
+    "/legal", "/privacy", "/privacy-policy", "/terms",
+]
 
 _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 
@@ -64,11 +71,29 @@ def _is_junk(email: str) -> bool:
     return False
 
 
+def deobfuscate(text: str) -> str:
+    """Turn common anti-scrape spellings back into real addresses.
+
+    Handles 'name [at] domain [dot] com', '(at)'/'{at}', spaced '@ . ', so the
+    plain email regex can then match them.
+    """
+    # [at] (at) {at} " at " -> @
+    text = re.sub(r"\s*[\[\({]\s*at\s*[\]\)}]\s*", "@", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s+at\s+", "@", text, flags=re.IGNORECASE)
+    # [dot] (dot) {dot} " dot " -> .
+    text = re.sub(r"\s*[\[\({]\s*dot\s*[\]\)}]\s*", ".", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s+dot\s+", ".", text, flags=re.IGNORECASE)
+    # collapse spaces around a literal @ or . inside address-looking runs
+    text = re.sub(r"\s*@\s*", "@", text)
+    text = re.sub(r"(@[\w-]+)\s*\.\s*(\w)", r"\1.\2", text)
+    return text
+
+
 def extract_emails(page_html: str, base_domain: str) -> list[str]:
-    """Real, on-domain emails published in the page HTML."""
+    """Real, on-domain emails published in the page HTML (incl. obfuscated)."""
     if not page_html:
         return []
-    text = html.unescape(page_html)
+    text = deobfuscate(html.unescape(page_html))
     base = normalize_domain(base_domain)
     found: list[str] = []
     seen: set[str] = set()
@@ -103,21 +128,73 @@ def _rank_emails(emails: list[str], base_domain: str) -> list[str]:
     return sorted(dict.fromkeys(emails), key=key)
 
 
-def domain_has_mx(domain: str) -> bool:
-    """Does the domain publish MX records (i.e. can it receive mail)?"""
+def _mx_records(domain: str) -> list[tuple[int, str]]:
+    """(preference, host) MX records for a domain, via nslookup."""
     domain = normalize_domain(domain)
     if not domain:
-        return False
+        return []
     try:
         out = subprocess.run(
             ["nslookup", "-type=mx", domain],
             capture_output=True, text=True, timeout=10,
         )
-        combined = (out.stdout + out.stderr).lower()
-        return "mail exchanger" in combined
     except Exception as e:
-        logger.debug("MX check failed for %s: %s", domain, e)
+        logger.debug("MX lookup failed for %s: %s", domain, e)
+        return []
+    records = []
+    combined = out.stdout + out.stderr
+    # Windows: "MX preference = 5, mail exchanger = host"
+    for m in re.finditer(
+        r"preference\s*=\s*(\d+)\s*,\s*mail exchanger\s*=\s*([A-Za-z0-9.\-]+)",
+        combined, re.IGNORECASE,
+    ):
+        records.append((int(m.group(1)), m.group(2).rstrip(".")))
+    # Fallback (Unix dig-style or preference-less output): host after "exchanger ="
+    if not records:
+        for m in re.finditer(r"mail exchanger\s*=\s*([A-Za-z0-9.\-]+)", combined, re.IGNORECASE):
+            records.append((10, m.group(1).rstrip(".")))
+    return sorted(records)
+
+
+def domain_has_mx(domain: str) -> bool:
+    """Does the domain publish MX records (i.e. can it receive mail)?"""
+    return bool(_mx_records(domain))
+
+
+def _mx_host(domain: str) -> str | None:
+    records = _mx_records(domain)
+    return records[0][1] if records else None
+
+
+def verify_mailbox(email: str, timeout: int = 12) -> bool | None:
+    """Best-effort SMTP RCPT probe: does this specific mailbox exist?
+
+    Returns True (accepted), False (explicitly rejected — a dead mailbox like
+    DigX's), or None (inconclusive: port 25 blocked, greylisted, or accept-all
+    server). Callers should only REFUSE to send on an explicit False.
+    """
+    if not email or "@" not in email:
+        return None
+    domain = email.split("@")[-1]
+    host = _mx_host(domain)
+    if not host:
         return False
+    try:
+        with smtplib.SMTP(host, 25, timeout=timeout) as server:
+            try:
+                server.ehlo()
+            except Exception:
+                server.helo()
+            server.mail("verify@opportunityradar.io")
+            code, _ = server.rcpt(email)
+            if code in (250, 251):
+                return True
+            if code in (550, 551, 553, 554):
+                return False
+            return None
+    except Exception as e:
+        logger.debug("Mailbox probe inconclusive for %s: %s", email, e)
+        return None
 
 
 async def _fetch_text(session: aiohttp.ClientSession, url: str) -> str | None:

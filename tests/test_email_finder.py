@@ -10,9 +10,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from scrapers.email_finder import (
     _rank_emails,
+    deobfuscate,
     extract_emails,
     find_email,
     normalize_domain,
+    verify_mailbox,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -20,6 +22,10 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 def _html() -> str:
     return (FIXTURES / "email_finder_contact.html").read_text(encoding="utf-8")
+
+
+def _obfuscated() -> str:
+    return (FIXTURES / "email_finder_obfuscated.html").read_text(encoding="utf-8")
 
 
 def test_extract_emails_finds_real_addresses():
@@ -62,6 +68,64 @@ def test_rank_drops_noreply_and_legal_last():
     ranked = _rank_emails(["noreply@acme.io", "hello@acme.io", "legal@acme.io"], "acme.io")
     assert ranked[0] == "hello@acme.io"
     assert ranked[-1] == "noreply@acme.io"
+
+
+def test_deobfuscate_common_tricks():
+    text = deobfuscate("hello [at] acme [dot] io and sales(at)acme(dot)io")
+    assert "hello@acme.io" in text
+    assert "sales@acme.io" in text
+
+
+def test_extract_emails_from_obfuscated_page():
+    emails = extract_emails(_obfuscated(), "obfusco.io")
+    for want in ["hello@obfusco.io", "sales@obfusco.io", "jane@obfusco.io",
+                 "support@obfusco.io", "press@obfusco.io", "team@obfusco.io"]:
+        assert want in emails, want
+    assert "you@example.com" not in emails
+    assert not any("png" in e for e in emails)
+
+
+def test_verify_mailbox_accepts_and_rejects():
+    class FakeSMTP:
+        def __init__(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def helo(self, *a): return (250, b"ok")
+        def ehlo(self, *a): return (250, b"ok")
+        def mail(self, *a): return (250, b"ok")
+        def rcpt(self, addr): return (250, b"ok") if "real" in addr else (550, b"no such user")
+
+    with patch("scrapers.email_finder._mx_host", lambda d: "mx.acme.io"), \
+         patch("scrapers.email_finder.smtplib.SMTP", FakeSMTP):
+        assert verify_mailbox("real@acme.io") is True
+        assert verify_mailbox("ghost@acme.io") is False
+
+
+def test_verify_mailbox_unknown_when_blocked():
+    def boom(*a, **k):
+        raise OSError("port 25 blocked")
+
+    with patch("scrapers.email_finder._mx_host", lambda d: "mx.acme.io"), \
+         patch("scrapers.email_finder.smtplib.SMTP", boom):
+        # blocked / unreachable probe must be inconclusive, not a false negative
+        assert verify_mailbox("real@acme.io") is None
+
+
+def test_mx_records_parses_windows_nslookup():
+    from unittest.mock import MagicMock
+
+    from scrapers import email_finder
+    fake = MagicMock()
+    fake.stdout = (
+        "n8nlab.io\tMX preference = 5, mail exchanger = alt1.aspmx.l.google.com\n"
+        "n8nlab.io\tMX preference = 1, mail exchanger = aspmx.l.google.com\n"
+    )
+    fake.stderr = ""
+    with patch("scrapers.email_finder.subprocess.run", lambda *a, **k: fake):
+        recs = email_finder._mx_records("n8nlab.io")
+        assert recs[0] == (1, "aspmx.l.google.com")  # lowest preference first
+        assert email_finder._mx_host("n8nlab.io") == "aspmx.l.google.com"
+        assert email_finder.domain_has_mx("n8nlab.io") is True
 
 
 def test_normalize_domain():
