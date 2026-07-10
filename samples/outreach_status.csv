@@ -1,0 +1,28 @@
+Company,Email,DeliveryStatus,Date,Notes
+AAAgency,,bounced_no_email,2026-07-10,first guess bounced; site publishes no email + form only: https://aaagency.io
+AI Automation Agency UK,hello@aiautomation.agency,delivered,2026-07-10,batch1 original send landed
+Afford Agency,webmaster@afford.agency,delivered,2026-07-10,batch1 original send landed
+Agentum AI,,delivered,2026-07-10,batch1 original send landed
+Apptag Solution,info@apptagsolution.com,delivered_verified,2026-07-10,scraped real email after first-guess bounce/unsent; delivered
+AutomateNexus,hello@automatenexus.com,delivered,2026-07-10,batch1 original send landed
+Binary Ideas AI Automation,,bounced_no_email,2026-07-10,first guess bounced; site publishes no email + form only: https://binaryideas.ai
+Bluelinks Agency,,delivered,2026-07-10,batch1 original send landed
+BuzzLead,contact@buzzlead.io,delivered_verified,2026-07-10,scraped real email after first-guess bounce/unsent; delivered
+ColdIQ,michel@coldiq.com,delivered_verified,2026-07-10,scraped real email after first-guess bounce/unsent; delivered
+ConsultingWhiz LLC,contact@consultingwhiz.com,delivered_verified,2026-07-10,scraped real email after first-guess bounce/unsent; delivered
+DigX AI Automation Agency,,bounced_dead,2026-07-10,domain has MX but both guessed and published addresses bounced; dead lead
+Geekbot,,delivered,2026-07-10,batch1 original send landed
+Genesys Growth,,bounced_no_email,2026-07-10,first guess bounced; site publishes no email + form only: https://genesysgrowth.com
+GrowwStacks Automation Solutions,,delivered,2026-07-10,batch1 original send landed
+Hackceleration,,delivered,2026-07-10,batch1 original send landed
+Hypergen,team@hypergen.io,delivered,2026-07-10,batch1 original send landed
+Instream Group,biuro@instreamgroup.com,delivered_verified,2026-07-10,scraped real email after first-guess bounce/unsent; delivered
+LevelUp Leads,john@levelupleads.io,delivered_verified,2026-07-10,scraped real email after first-guess bounce/unsent; delivered
+Makeitfuture,,bounced_no_email,2026-07-10,first guess bounced; site publishes no email + form only: https://makeitfuture.com
+Outerbridge (n8n agency),,delivered,2026-07-10,batch1 original send landed
+OutreachBloom,,bounced_no_email,2026-07-10,first guess bounced; site publishes no email + form only: https://outreachbloom.com
+ProspectOut,info@prospectout.com,delivered_verified,2026-07-10,scraped real email after first-guess bounce/unsent; delivered
+The AI Automation Agency,,bounced_no_email,2026-07-10,first guess bounced; site publishes no email + form only: https://theaiautomationagency.net
+ZapScale,hello@zapscale.com,delivered,2026-07-10,batch1 original send landed
+Zeroic,,bounced_no_email,2026-07-10,first guess bounced; site publishes no email + form only: https://zeroic.com
+n8n Lab,team@n8nlab.io,delivered_verified,2026-07-10,scraped real email after first-guess bounce/unsent; delivered

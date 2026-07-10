@@ -1,11 +1,11 @@
 Company,Category,Website,Founder,LinkedIn,Agency Size,Niche / Specialty,Email,Source,Contacted?,Interview Booked?,Notes
-DigX AI Automation Agency,AI Automation,digx.agency,Kira Gusak,linkedin.com/company/digx-ai-agency,2-10,Custom AI agents + automations + team training,,"Deep research verified",No,No,Founded 2024. Founder very visible on LinkedIn.
-AAAgency,AI Automation,aaagency.io,Denis Popa,es.linkedin.com/company/aaagency-ai,Small,Done-for-you AI workflows with n8n + OpenAI API for B2B,,"Deep research verified",No,No,Barcelona. n8n + Microsoft Graph API integrations.
-GrowwStacks Automation Solutions,AI Automation,growwstacks.com,,clutch.co/profile/growwstacks-automation,10-49,Business process automation + AI agents + voice AI + Make.com,,"Deep research verified",No,No,Mumbai. Make.com Platinum Partner. Clutch reviews.
-Zeroic,AI Automation,zeroic.com,,,14,Low/no-code dev + AI development (20%) + AI agents (10%),,"Deep research verified",No,No,Bengaluru. Clutch profile: clutch.co/profile/zeroic
-Binary Ideas AI Automation,AI Automation,binaryideas.ai,,linkedin.com/company/binary-ideas-ai-automation,,AI agents for lead gen + appointment scheduling,,"Deep research verified",No,No,Dedicated lead gen AI agent page at binaryideas.ai/lead-generation-ai/
-AI Automation Agency UK,AI Automation,aiautomation.agency,,uk.linkedin.com/company/aiautomationagency,2-10,AI automation exclusively for health & wellness startups,,"Deep research verified",No,No,London. Very niche vertical — health/wellness only.
-n8n Lab,AI Automation,n8nlab.io,,,Small,Enterprise n8n deployments + AI agents + RAG systems + AWS/Azure,,n8nlab.io blog,No,No,Certified n8n partner. Multi-agent systems.
+DigX AI Automation Agency,AI Automation,digx.agency,Kira Gusak,linkedin.com/company/digx-ai-agency,2-10,Custom AI agents + automations + team training,,Deep research verified,Yes,No,Founded 2024. Founder very visible on LinkedIn.
+AAAgency,AI Automation,aaagency.io,Denis Popa,es.linkedin.com/company/aaagency-ai,Small,Done-for-you AI workflows with n8n + OpenAI API for B2B,,Deep research verified,No,No,Barcelona. n8n + Microsoft Graph API integrations.
+GrowwStacks Automation Solutions,AI Automation,growwstacks.com,,clutch.co/profile/growwstacks-automation,10-49,Business process automation + AI agents + voice AI + Make.com,,Deep research verified,Yes,No,Mumbai. Make.com Platinum Partner. Clutch reviews.
+Zeroic,AI Automation,zeroic.com,,,14,Low/no-code dev + AI development (20%) + AI agents (10%),,Deep research verified,No,No,Bengaluru. Clutch profile: clutch.co/profile/zeroic
+Binary Ideas AI Automation,AI Automation,binaryideas.ai,,linkedin.com/company/binary-ideas-ai-automation,,AI agents for lead gen + appointment scheduling,,Deep research verified,No,No,Dedicated lead gen AI agent page at binaryideas.ai/lead-generation-ai/
+AI Automation Agency UK,AI Automation,aiautomation.agency,,uk.linkedin.com/company/aiautomationagency,2-10,AI automation exclusively for health & wellness startups,hello@aiautomation.agency,Deep research verified,Yes,No,London. Very niche vertical — health/wellness only.
+n8n Lab,AI Automation,n8nlab.io,,,Small,Enterprise n8n deployments + AI agents + RAG systems + AWS/Azure,team@n8nlab.io,n8nlab.io blog,Yes,No,Certified n8n partner. Multi-agent systems.
 XRay Tech,AI Automation,,,, ,Business process mapping + workflow architecture + legacy SaaS integrations,,n8nlab.io blog,No,No,US-based. Find website via LinkedIn search.
 Matrix Automators,AI Automation,,,,Small,Custom AI apps + Python/Node.js + vector DB + LLM fine-tuning,,n8nlab.io blog,No,No,US-based.
 DTC Flow,AI Automation,,,,Small,E-commerce automation + Shopify workflows + fulfillment + ad attribution,,n8nlab.io blog,No,No,US-based. E-commerce focus.
@@ -19,45 +19,45 @@ VSSL Agency,AI Automation,,,, ,Marketing ops + B2B brand automation + Make.com,,
 Advance B2B,AI Automation,,,, ,B2B growth + CRM automation,,Make.com partner directory,No,No,Europe-focused.
 Flowmundo,AI Automation,,,, ,Complex workflows + custom Make.com connectors,,Make.com partner directory,No,No,United Kingdom.
 AXE Automation,AI Automation,,,, ,Productivity + operational efficiency automation,,Make.com partner directory,No,No,United States.
-Apptag Solution,AI Automation,apptagsolution.com,,,Small,Multi-tool automations for SMBs,,Make.com partner directory,No,No,Global remote.
-Bluelinks Agency,AI Automation,bluelinks.agency,,,Mid,Workflow automation + SEO/PR/ORM,,Make.com partner directory,No,No,UK/USA/Middle East.
-AutomateNexus,AI Automation,automatenexus.com,,clutch.co/profile/automatenexus,Small,n8n + Make + Zapier workflow automation,,Clutch.co,No,No,Veteran-owned. Founded 2025.
-Agentum AI,AI Automation,agentum.ai,,clutch.co/profile/agentum-ai,Small,Autonomous digital workers + AI BPA with n8n/Make/Zapier,,Clutch.co,No,No,
+Apptag Solution,AI Automation,apptagsolution.com,,,Small,Multi-tool automations for SMBs,info@apptagsolution.com,Make.com partner directory,Yes,No,Global remote.
+Bluelinks Agency,AI Automation,bluelinks.agency,,,Mid,Workflow automation + SEO/PR/ORM,,Make.com partner directory,Yes,No,UK/USA/Middle East.
+AutomateNexus,AI Automation,automatenexus.com,,clutch.co/profile/automatenexus,Small,n8n + Make + Zapier workflow automation,hello@automatenexus.com,Clutch.co,Yes,No,Veteran-owned. Founded 2025.
+Agentum AI,AI Automation,agentum.ai,,clutch.co/profile/agentum-ai,Small,Autonomous digital workers + AI BPA with n8n/Make/Zapier,,Clutch.co,Yes,No,
 Chrysalis Software,AI Automation,,,clutch.co/profile/chrysalis-software,2-9,Make + Zapier + n8n automation for SMBs. Founded 2022.,,Clutch.co,No,No,Small team — founder likely reachable.
 Sterling Labs,AI Automation,,,clutch.co/profile/sterling-labs,2-9,n8n + Make + Zapier automation for SMBs,,Clutch.co,No,No,Toronto. Was flagged by deep research but worth checking directly.
-ConsultingWhiz LLC,AI Automation,consultingwhiz.com,,clutch.co/profile/consultingwhiz,Small,Business automation + process improvement,,Clutch.co,No,No,
+ConsultingWhiz LLC,AI Automation,consultingwhiz.com,,clutch.co/profile/consultingwhiz,Small,Business automation + process improvement,contact@consultingwhiz.com,Clutch.co,Yes,No,
 TC9,AI Automation,,,linkedin.com/company/tc9,Small,GTM workflow automation + revenue-generating process systems,Jérémy Grandillon,heyreach.io expert,No,No,Founder: Jérémy Grandillon. Also crossover into lead gen.
 Top of Funnel,AI Automation,,,linkedin.com/company/top-of-funnel,Small,Enterprise top-of-funnel automation — Clay + n8n + Instantly,Brandon Charleson,heyreach.io expert,No,No,Founder: Brandon Charleson.
 OneThousandPieces,AI Automation,,,heyreach.io/expert/onethousandpieces,Small,News-driven + social-signal workflows for lead gen + RevOps,,heyreach.io expert,No,No,
 Workflows.io,AI Automation,,,heyreach.io/expert/workflows-io,Small,Full-stack GTM systems — content + outbound + RevOps connected,,heyreach.io expert,No,No,
 Startup Cookie,AI Automation,,,, ,AI content creation + founder-led distribution systems,Barbara Jovanovic,heyreach.io expert,No,No,Co-Founder: Barbara Jovanovic.
-Hackceleration,AI Automation,hackceleration.com,,,Small,Make + n8n workflow creation with retries + structured logs,,Make.com partner directory,No,No,
+Hackceleration,AI Automation,hackceleration.com,,,Small,Make + n8n workflow creation with retries + structured logs,,Make.com partner directory,Yes,No,
 RevOps Automated,AI Automation,,,,Small,CRM automation + lead scoring + HubSpot/Salesforce pipelines,,n8nlab.io blog / HubSpot,No,No,Crossover AI automation + RevOps.
 AISD,AI Automation,,,clutch.co/profile/aisd,,AI automation services,,Clutch.co,No,No,Search on Clutch for details.
 Makeitfuture,AI Automation,makeitfuture.com,,,Mid,Make.com expert partner + enterprise integrations,,Make.com partner page,No,No,
 Genesys Growth,AI Automation,genesysgrowth.com,,,Small,Zapier AI + Make + n8n for marketing leaders,,Web search,No,No,
 Business Automated,AI Automation,,,ecosystem.hubspot.com/marketplace/solutions/business-automated,,Make.com + HubSpot automation,,HubSpot marketplace,No,No,
-Afford Agency,AI Automation,afford.agency,,,Small,AI automation + case studies for B2B,,afford.agency,No,No,
+Afford Agency,AI Automation,afford.agency,,,Small,AI automation + case studies for B2B,webmaster@afford.agency,afford.agency,Yes,No,
 BrickWin Consultancy,AI Automation,,,clutch.co/profile/brickwin-consultancy-services-private,,AI automation + consulting,,Clutch.co,No,No,India-based.
 Ausca AI,AI Automation,,,clutch.co/profile/ausca-ai,,AI automation services,,Clutch.co,No,No,
-Geekbot,AI Automation,geekbot.com,,,Small,Async standup automation + Slack workflows,,Make.com ecosystem,No,No,
+Geekbot,AI Automation,geekbot.com,,,Small,Async standup automation + Slack workflows,,Make.com ecosystem,Yes,No,
 Codex Solutions International,AI Automation,,,,Small,Integration + workflow systems development,,Make.com partner directory,No,No,
 Selected Internet Marketing,AI Automation,,,,Small,Performance marketing + operations automation — Middle East,,Make.com partner directory,No,No,
 The AI Automation Agency,AI Automation,theaiautomationagency.net,,linkedin.com/company/the-ai-automation-agency,Small,General AI automation for B2B,,LinkedIn search,No,No,
 Mirza AI Automation Agency,AI Automation,,,linkedin.com/company/mirza-ai-automation-agency,,AI automation services,,LinkedIn search,No,No,
 Understory,AI Automation,,,, ,Paid ads + outbound campaigns for B2B SaaS,,heyreach.io expert,No,No,
 Synaptic Labs,AI Automation,,,, ,AI workflow automation + agent development,,Web search,No,No,Search LinkedIn for current details.
-Outerbridge (n8n agency),AI Automation,outerbridge.io,,,Small,Open-source n8n-based workflow platform for agencies,,n8n ecosystem,No,No,
-ZapScale,AI Automation,zapscale.com,,,Small,Customer success automation + Zapier integrations,,Web search,No,No,
+Outerbridge (n8n agency),AI Automation,outerbridge.io,,,Small,Open-source n8n-based workflow platform for agencies,,n8n ecosystem,Yes,No,
+ZapScale,AI Automation,zapscale.com,,,Small,Customer success automation + Zapier integrations,hello@zapscale.com,Web search,Yes,No,
 OutreachBloom,Lead Generation,outreachbloom.com,Jayson DeMers,,Small,Done-for-you email-only cold outreach,,outreachbloom.com,No,No,Founder: Jayson DeMers (CEO). Email-only focus.
-ProspectOut,Lead Generation,prospectout.com,Jahidul Islam,,Small,Cold email campaigns — SaaS + financial services + agencies,,$100-150/meeting + $250-500 platform fee,prospectout.com,No,No,Founder: Jahidul Islam. Pay-per-meeting model.
-BuzzLead,Lead Generation,buzzlead.io,,,Small,Signal-based intent cold outreach,,outreachbloom.com,No,No,120-day program. Buying signal approach.
-Hypergen,Lead Generation,hypergen.io,,,Small-mid,Intent-based cold email + Clay-powered signal targeting,,$5k+/mo,sequenzy.com / prospectout.com,No,No,6-month minimum. Buys signal data.
-ColdIQ,Lead Generation,coldiq.com,,,30+,Intent-driven personalization + Clay-powered,,belkins.io blog,No,No,Clay specialists. Good fit for signal-based positioning.
+ProspectOut,Lead Generation,prospectout.com,Jahidul Islam,,Small,Cold email campaigns — SaaS + financial services + agencies,info@prospectout.com,$100-150/meeting + $250-500 platform fee,prospectout.com,Yes,No,Founder: Jahidul Islam. Pay-per-meeting model.
+BuzzLead,Lead Generation,buzzlead.io,,,Small,Signal-based intent cold outreach,contact@buzzlead.io,outreachbloom.com,Yes,No,120-day program. Buying signal approach.
+Hypergen,Lead Generation,hypergen.io,,,Small-mid,Intent-based cold email + Clay-powered signal targeting,team@hypergen.io,$5k+/mo,sequenzy.com / prospectout.com,Yes,No,6-month minimum. Buys signal data.
+ColdIQ,Lead Generation,coldiq.com,,,30+,Intent-driven personalization + Clay-powered,michel@coldiq.com,belkins.io blog,Yes,No,Clay specialists. Good fit for signal-based positioning.
 Beanstalk Consulting,Lead Generation,beanstalk-consulting.co,,,Small,B2B SaaS meeting booking — qualification-focused,,sequenzy.com,No,No,
-Instream Group,Lead Generation,instreamgroup.com,,,Mid,International cold email campaigns (40+ markets),,sequenzy.com,No,No,
+Instream Group,Lead Generation,instreamgroup.com,,,Mid,International cold email campaigns (40+ markets),biuro@instreamgroup.com,sequenzy.com,Yes,No,
 Pearl Lemon Leads,Lead Generation,pearllemonleads.com,,,Small-mid,UK/US cold outreach — multi-channel,,sequenzy.com,No,No,
-LevelUp Leads,Lead Generation,levelupleads.io,,,Small,Technical buyer targeting — $3k+/mo,,sequenzy.com,No,No,
+LevelUp Leads,Lead Generation,levelupleads.io,,,Small,Technical buyer targeting — $3k+/mo,john@levelupleads.io,sequenzy.com,Yes,No,
 OneAway,Lead Generation,oneaway.io,,,Small,$5-15k/60-day — deliverability-first outreach,,sequenzy.com,No,No,
 Growth.cx,Lead Generation,growth.cx,,,Small,B2B SaaS + tech companies exclusively,,prospectout.com,No,No,
 Klean Leads,Lead Generation,kleanleads.com,,,Small,Lead quality + verification focus — $1,500/mo,,sequenzy.com,No,No,

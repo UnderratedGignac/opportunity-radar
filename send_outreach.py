@@ -14,6 +14,7 @@ Required env vars (set in .env):
 from __future__ import annotations
 
 import argparse
+import asyncio
 import csv
 import os
 import re
@@ -25,6 +26,8 @@ from email.mime.text import MIMEText
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+from scrapers.email_finder import domain_has_mx, find_email
 
 load_dotenv()
 
@@ -52,6 +55,41 @@ def _domain_from_website(url: str) -> str:
     url = re.sub(r"^https?://", "", url)
     url = url.split("/")[0]
     return url
+
+
+def _valid_address(value: str) -> bool:
+    value = (value or "").strip()
+    return bool(value) and "@" in value and " " not in value and "." in value.split("@")[-1]
+
+
+async def resolve_email(row: dict) -> tuple[str | None, str]:
+    """Resolve a DELIVERABLE address for a prospect, or (None, 'none').
+
+    Never fabricates: a bare `firstname@domain` guess that isn't published
+    anywhere is exactly what caused the batch-1 bounces. Order of trust:
+      1. an explicit CSV address whose domain accepts mail  -> ('...', 'csv')
+      2. an address actually published on the company site  -> ('...', 'scraped')
+      3. nothing verifiable                                 -> (None, 'none')
+    """
+    explicit = (row.get("Email", "") or "").strip()
+    domain = _domain_from_website(row.get("Website", ""))
+
+    if _valid_address(explicit):
+        try:
+            if domain_has_mx(explicit.split("@")[-1]):
+                return explicit, "csv"
+        except Exception:
+            pass
+
+    if domain:
+        try:
+            res = await find_email(domain, row.get("Company"))
+            if res.get("email") and res.get("mx_ok"):
+                return res["email"], "scraped"
+        except Exception as e:
+            print(f"    (email scrape failed for {domain}: {e})")
+
+    return None, "none"
 
 
 def _guess_emails(row: dict) -> list[str]:
@@ -240,19 +278,19 @@ def main() -> None:
 
     for row in pending:
         company = row.get("Company", "Unknown")
-        candidates = _guess_emails(row)
+        # Resolve a VERIFIED deliverable address — never a fabricated guess.
+        to_email, source = asyncio.run(resolve_email(row))
 
-        if not candidates:
-            print(f"  [SKIP]  {company} — no email or website found")
+        if not to_email:
+            print(f"  [SKIP]  {company} — no verified email found (site published none / no MX)")
             skipped += 1
             continue
 
-        to_email = candidates[0]
         subject, body = _build_email(row, to_email, teaser)
 
         if args.dry_run:
             print(f"  [DRY]   {company}")
-            print(f"          To:      {to_email}")
+            print(f"          To:      {to_email}  ({source})")
             print(f"          Subject: {subject}")
             print(f"          Body preview: {body[:120].strip()}...")
             print()
@@ -262,7 +300,7 @@ def main() -> None:
             _send(to_email, subject, body)
             row["Contacted?"] = "Yes"
             _save_csv(rows, fieldnames)
-            print(f"  [SENT]  {company} → {to_email}")
+            print(f"  [SENT]  {company} → {to_email}  ({source})")
             sent += 1
             if sent < len(pending):
                 time.sleep(SEND_DELAY)

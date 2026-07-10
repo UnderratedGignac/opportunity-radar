@@ -104,3 +104,61 @@ def test_guess_emails_ignores_non_address_in_email_column():
 
     real = _guess_emails(_row(Email="real@example.com"))
     assert real == ["real@example.com"]
+
+
+# ── verified-only resolution (never send to a fabricated address) ─────────────
+
+import asyncio
+from unittest.mock import patch
+
+from send_outreach import resolve_email
+
+
+def test_resolve_email_trusts_explicit_when_domain_has_mx():
+    with patch("send_outreach.domain_has_mx", lambda d: True):
+        email, source = asyncio.run(resolve_email(_row(Email="jane@acme.io")))
+    assert email == "jane@acme.io"
+    assert source == "csv"
+
+
+def test_resolve_email_scrapes_when_no_explicit():
+    async def fake_find(domain, company=None):
+        return {"email": "hello@acme.io", "mx_ok": True, "all_emails": ["hello@acme.io"],
+                "contact_url": "https://acme.io", "source": "website"}
+
+    with patch("send_outreach.find_email", fake_find), \
+         patch("send_outreach.domain_has_mx", lambda d: True):
+        email, source = asyncio.run(resolve_email(_row(Email="", Website="acme.io")))
+    assert email == "hello@acme.io"
+    assert source == "scraped"
+
+
+def test_resolve_email_returns_none_when_unverifiable():
+    async def fake_find(domain, company=None):
+        return {"email": None, "mx_ok": False, "all_emails": [],
+                "contact_url": "https://x.io", "source": "contact_page"}
+
+    with patch("send_outreach.find_email", fake_find), \
+         patch("send_outreach.domain_has_mx", lambda d: False):
+        email, source = asyncio.run(resolve_email(_row(Email="", Website="x.io")))
+    # never fabricate: no verified address means no send
+    assert email is None
+    assert source == "none"
+
+
+def test_resolve_email_rejects_explicit_on_dead_domain_then_scrapes():
+    async def fake_find(domain, company=None):
+        return {"email": "team@acme.io", "mx_ok": True, "all_emails": ["team@acme.io"],
+                "contact_url": "https://acme.io", "source": "website"}
+
+    # explicit address is on a domain with no MX -> don't trust it, scrape instead
+    def mx(d):
+        return d != "dead.io"
+
+    with patch("send_outreach.find_email", fake_find), \
+         patch("send_outreach.domain_has_mx", mx):
+        email, source = asyncio.run(
+            resolve_email(_row(Email="x@dead.io", Website="acme.io"))
+        )
+    assert email == "team@acme.io"
+    assert source == "scraped"
