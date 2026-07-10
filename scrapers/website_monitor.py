@@ -22,7 +22,7 @@ _HIGH_VALUE_PATTERNS = {
     "we're hiring": ("website_change", "Hiring banner on website", 10),
     "new office": ("website_change", "New office mentioned on website", 12),
     r"\$[\d,]+/month": ("website_change", "Pricing updated on website", 15),
-    "series": ("website_change", "Funding mention on website", 18),
+    r"series\s+[a-e]\b": ("website_change", "Funding mention on website", 18),
 }
 
 

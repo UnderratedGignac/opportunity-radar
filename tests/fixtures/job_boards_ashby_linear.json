@@ -1,0 +1,61 @@
+{
+ "jobs": [
+  {
+   "id": "d3bc1ced-3ce4-4086-a050-555055dbb1ff",
+   "title": "Senior / Staff Fullstack Engineer",
+   "department": "Product",
+   "team": "Engineering",
+   "employmentType": "FullTime",
+   "location": "Europe",
+   "publishedAt": "2021-04-27T20:13:45.158+00:00",
+   "isListed": true,
+   "isRemote": true,
+   "workplaceType": "Remote",
+   "jobUrl": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff",
+   "applyUrl": "https://jobs.ashbyhq.com/linear/d3bc1ced-3ce4-4086-a050-555055dbb1ff/application"
+  },
+  {
+   "id": "c21af93e-210f-4969-8eaa-90fb16a5b720",
+   "title": "Account Executive, Startups",
+   "department": "GTM",
+   "team": "Sales",
+   "employmentType": "FullTime",
+   "location": "North America",
+   "publishedAt": "2025-11-14T22:09:45.713+00:00",
+   "isListed": true,
+   "isRemote": true,
+   "workplaceType": "Remote",
+   "jobUrl": "https://jobs.ashbyhq.com/linear/c21af93e-210f-4969-8eaa-90fb16a5b720",
+   "applyUrl": "https://jobs.ashbyhq.com/linear/c21af93e-210f-4969-8eaa-90fb16a5b720/application"
+  },
+  {
+   "id": "370d9605-f02f-44f9-97fa-ebf769bed93d",
+   "title": "Customer Success Manager",
+   "department": "GTM",
+   "team": "Sales",
+   "employmentType": "FullTime",
+   "location": "North America",
+   "publishedAt": "2026-06-17T13:18:43.591+00:00",
+   "isListed": true,
+   "isRemote": true,
+   "workplaceType": "Remote",
+   "jobUrl": "https://jobs.ashbyhq.com/linear/370d9605-f02f-44f9-97fa-ebf769bed93d",
+   "applyUrl": "https://jobs.ashbyhq.com/linear/370d9605-f02f-44f9-97fa-ebf769bed93d/application"
+  },
+  {
+   "id": "c0abc97e-b4d7-4ad7-bd13-bc40f4023227",
+   "title": "Product Marketing Manager",
+   "department": "Product",
+   "team": "Product Management",
+   "employmentType": "FullTime",
+   "location": "North America",
+   "publishedAt": "2026-06-30T20:17:43.790+00:00",
+   "isListed": true,
+   "isRemote": true,
+   "workplaceType": "Remote",
+   "jobUrl": "https://jobs.ashbyhq.com/linear/c0abc97e-b4d7-4ad7-bd13-bc40f4023227",
+   "applyUrl": "https://jobs.ashbyhq.com/linear/c0abc97e-b4d7-4ad7-bd13-bc40f4023227/application"
+  }
+ ],
+ "apiVersion": "1"
+}

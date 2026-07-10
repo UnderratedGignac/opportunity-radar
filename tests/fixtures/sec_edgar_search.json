@@ -1,0 +1,446 @@
+{
+ "took": 69,
+ "timed_out": false,
+ "hits": {
+  "total": {
+   "value": 988,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_index": "edgar_file",
+    "_id": "0002144231-26-000001:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002144231"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-589866"
+     ],
+     "display_names": [
+      "Volantis I, LP  (CIK 0002144231)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [
+      "MA"
+     ],
+     "sics": [],
+     "form": "D",
+     "adsh": "0002144231-26-000001",
+     "film_num": [
+      "261160229"
+     ],
+     "biz_locations": [
+      "Boston, MA"
+     ],
+     "file_type": "D",
+     "file_description": null,
+     "inc_states": [
+      "DE"
+     ],
+     "items": [
+      "06B",
+      "3C",
+      "3C.1"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002144231-26-000001:primary_doc.xml"
+    ]
+   },
+   {
+    "_index": "edgar_file",
+    "_id": "0002144211-26-000001:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002144211"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-589861"
+     ],
+     "display_names": [
+      "Northstar Baseball Group, LLC  (CIK 0002144211)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [
+      "TX"
+     ],
+     "sics": [],
+     "form": "D",
+     "adsh": "0002144211-26-000001",
+     "film_num": [
+      "261160158"
+     ],
+     "biz_locations": [
+      "Austin, TX"
+     ],
+     "file_type": "D",
+     "file_description": null,
+     "inc_states": [
+      "TX"
+     ],
+     "items": [
+      "06B"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002144211-26-000001:primary_doc.xml"
+    ]
+   },
+   {
+    "_index": "edgar_file",
+    "_id": "0002144012-26-000001:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002144012"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-589816"
+     ],
+     "display_names": [
+      "Canal Grande Fund II LP  (CIK 0002144012)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [
+      "NY"
+     ],
+     "sics": [],
+     "form": "D",
+     "adsh": "0002144012-26-000001",
+     "film_num": [
+      "261159118"
+     ],
+     "biz_locations": [
+      "New York, NY"
+     ],
+     "file_type": "D",
+     "file_description": null,
+     "inc_states": [
+      "DE"
+     ],
+     "items": [
+      "06B",
+      "3C",
+      "3C.7"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002144012-26-000001:primary_doc.xml"
+    ]
+   },
+   {
+    "_index": "edgar_file",
+    "_id": "0002143992-26-000001:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002143992"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-589738"
+     ],
+     "display_names": [
+      "OurCrowd (Investment in And) L.P.  (CIK 0002143992)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [],
+     "sics": [],
+     "form": "D",
+     "adsh": "0002143992-26-000001",
+     "film_num": [
+      "261158297"
+     ],
+     "biz_locations": [
+      "Jerusalem"
+     ],
+     "file_type": "D",
+     "file_description": null,
+     "inc_states": [
+      "D8"
+     ],
+     "items": [
+      "06B"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002143992-26-000001:primary_doc.xml"
+    ]
+   },
+   {
+    "_index": "edgar_file",
+    "_id": "0002143943-26-000001:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002143943"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-589727"
+     ],
+     "display_names": [
+      "Revolve Partners II, LP  (CIK 0002143943)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [
+      "SD"
+     ],
+     "sics": [],
+     "form": "D",
+     "adsh": "0002143943-26-000001",
+     "film_num": [
+      "261158205"
+     ],
+     "biz_locations": [
+      "Sioux Falls, SD"
+     ],
+     "file_type": "D",
+     "file_description": null,
+     "inc_states": [
+      "SD"
+     ],
+     "items": [
+      "06B"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002143943-26-000001:primary_doc.xml"
+    ]
+   },
+   {
+    "_index": "edgar_file",
+    "_id": "0002143918-26-000001:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002143918"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-589822"
+     ],
+     "display_names": [
+      "Poaster Technologies Inc.  (CIK 0002143918)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [
+      "NY"
+     ],
+     "sics": [],
+     "form": "D",
+     "adsh": "0002143918-26-000001",
+     "film_num": [
+      "261159161"
+     ],
+     "biz_locations": [
+      "Brooklyn, NY"
+     ],
+     "file_type": "D",
+     "file_description": null,
+     "inc_states": [
+      "DE"
+     ],
+     "items": [
+      "06B"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002143918-26-000001:primary_doc.xml"
+    ]
+   },
+   {
+    "_index": "edgar_file",
+    "_id": "0002143681-26-000001:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002143681"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-589736"
+     ],
+     "display_names": [
+      "Kyma Concepts, Inc.  (CIK 0002143681)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [
+      "CA"
+     ],
+     "sics": [],
+     "form": "D",
+     "adsh": "0002143681-26-000001",
+     "film_num": [
+      "261158285"
+     ],
+     "biz_locations": [
+      "San Francisco, CA"
+     ],
+     "file_type": "D",
+     "file_description": null,
+     "inc_states": [
+      "DE"
+     ],
+     "items": [
+      "06B"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002143681-26-000001:primary_doc.xml"
+    ]
+   },
+   {
+    "_index": "edgar_file",
+    "_id": "0002143657-26-000001:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002143657"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-589837"
+     ],
+     "display_names": [
+      "Genesis Computing Inc.  (CIK 0002143657)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [
+      "DE"
+     ],
+     "sics": [],
+     "form": "D",
+     "adsh": "0002143657-26-000001",
+     "film_num": [
+      "261159528"
+     ],
+     "biz_locations": [
+      "Wilmington, DE"
+     ],
+     "file_type": "D",
+     "file_description": null,
+     "inc_states": [
+      "DE"
+     ],
+     "items": [
+      "06B"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002143657-26-000001:primary_doc.xml"
+    ]
+   },
+   {
+    "_index": "edgar_file",
+    "_id": "0002139388-26-000003:primary_doc.xml",
+    "_score": null,
+    "_source": {
+     "ciks": [
+      "0002139388"
+     ],
+     "period_ending": null,
+     "file_num": [
+      "021-586768"
+     ],
+     "display_names": [
+      "Eave Capital Partners LP  (CIK 0002139388)"
+     ],
+     "xsl": "xslFormDX01",
+     "schema_version": "X0708",
+     "sequence": 1,
+     "root_forms": [
+      "D"
+     ],
+     "file_date": "2026-07-07",
+     "biz_states": [
+      "AL"
+     ],
+     "sics": [],
+     "form": "D/A",
+     "adsh": "0002139388-26-000003",
+     "film_num": [
+      "261159025"
+     ],
+     "biz_locations": [
+      "Birmingham, AL"
+     ],
+     "file_type": "D/A",
+     "file_description": null,
+     "inc_states": [
+      "DE"
+     ],
+     "items": [
+      "06B"
+     ]
+    },
+    "sort": [
+     1783382400000,
+     "0002139388-26-000003:primary_doc.xml"
+    ]
+   }
+  ]
+ }
+}

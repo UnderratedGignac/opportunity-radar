@@ -23,7 +23,7 @@ from agents.signal_collection_agent import SignalCollectionAgent
 from core.event_bus import EventBus
 from models.company import CompanyProfile
 from models.signal import Contact, Opportunity, OutreachPackage
-from scrapers.apollo import get_contacts
+from scrapers.contacts import get_contacts
 
 logger = logging.getLogger("radar.pipeline")
 
@@ -74,7 +74,7 @@ class CompanyPipeline:
             opportunity.decision_maker_titles = intel.get("decision_maker_titles", [])
 
             self.state = PipelineState.GENERATE_OUTREACH
-            raw_contacts = await get_contacts(company.domain)
+            raw_contacts = await get_contacts(company.domain, company.name)
             contacts = []
             for c in raw_contacts:
                 contacts.append(Contact(

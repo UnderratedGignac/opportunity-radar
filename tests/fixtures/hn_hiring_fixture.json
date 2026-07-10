@@ -1,0 +1,101 @@
+{
+ "discovery": {
+  "hits": [
+   {
+    "objectID": "48747976",
+    "title": "Ask HN: Who is hiring? (July 2026)",
+    "created_at": "2026-07-01T15:01:21Z",
+    "author": "whoishiring"
+   },
+   {
+    "objectID": "48357725",
+    "title": "Ask HN: Who is hiring? (June 2026)",
+    "created_at": "2026-06-01T15:00:48Z",
+    "author": "whoishiring"
+   },
+   {
+    "objectID": "47975571",
+    "title": "Ask HN: Who is hiring? (May 2026)",
+    "created_at": "2026-05-01T15:00:07Z",
+    "author": "whoishiring"
+   },
+   {
+    "objectID": "47601859",
+    "title": "Ask HN: Who is hiring? (April 2026)",
+    "created_at": "2026-04-01T15:01:36Z",
+    "author": "whoishiring"
+   },
+   {
+    "objectID": "47219668",
+    "title": "Ask HN: Who is hiring? (March 2026)",
+    "created_at": "2026-03-02T16:00:27Z",
+    "author": "whoishiring"
+   }
+  ]
+ },
+ "thread": {
+  "id": 48747976,
+  "title": "Ask HN: Who is hiring? (July 2026)",
+  "author": "whoishiring",
+  "created_at": "2026-07-01T15:01:21.000Z",
+  "type": "story",
+  "children": [
+   {
+    "id": 48747987,
+    "author": "Overwatch360",
+    "created_at": "2026-07-01T15:01:52.000Z",
+    "text": "Blaine, WA | CaseLight Systems Inc. (CSI) | Solo Founder | Remote (US Only) | Founding Systems Engineer | FULL EQUITY (30% Stake)<p>CaseLight is building a secure, high performance, offline first Windows desktop application designed for private &amp; legal investigators, corporate SIUs, and local law enforcement agencies across the country.<p>What We Are Building:<p>- An offline first platform using React for the interface layer and a highly secure, encrypted local data layer utilizing SQLCipher.\n- Deeply optimized background multi threading to handle drag and drop forensic file ingestion, real time dual timeline matrices, and cryptographic hashing.\n- A robust, standalone local document builder and checkbox driven PDF report compiler that runs completely isolated on the host machine hardware.\n- We have a completed 24 page system blueprint, a verified 20 page investor deck, and a 2 page technical specification ready for immediate onboarding handover.<p>Who You Are:<p>- A senior engineer who can confidently own the native Windows backend layer, manage local data streams safely, and protect against memory leaks.\n- Deeply experienced in C# .NET frameworks (WinUI 3) or secure, native Node addon desktop environments.\n- Highly proficient with local database architecture, transactional queries, and native Windows OS level integrations.<p>Our 30% equity pool is completely intact, and engineering compensation will be structured around milestone performance incentives. We are newly incorporated, backed by 24+ years of federal law enforcement and private investigations domain expertise, and actively moving through multiple angel network pipelines.<p>If you are a builder who wants to own the technology layer of a highly scalable, capital efficient software platform from the ground up, let&#x27;s talk.<p>Company: <a href=\"https:&#x2F;&#x2F;getcaselight.com\" rel=\"nofollow\">https:&#x2F;&#x2F;getcaselight.com</a><p>Founder: <a href=\"https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;charles-eklof&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;charles-eklof&#x2F;</a><p>Reply here: charles@getcaselight.com",
+    "children": [],
+    "type": "comment"
+   },
+   {
+    "id": 48747990,
+    "author": "norejisace",
+    "created_at": "2026-07-01T15:02:00.000Z",
+    "text": "We The Flywheel | AI-Native Engineers &amp; Operators | REMOTE (worldwide) | Contract &#x2F; Part-time (10–40 hrs&#x2F;wk)<p>We&#x27;re a remote-first digital product studio building across sports media, AI, fitness, and personal branding — 500+ web properties and deeply AI-native workflows. AI does the heavy lifting here, but it&#x27;s the leverage, not the point: we hire for the human judgment, ingenuity, and taste on top of it.<p>Open roles (remote, contract):<p>- Agentic Engineer — ship real software with AI coding agents (Claude Code, Cursor, Aider). You&#x27;re an engineer, not a prompt operator: basic technical foundation in databases, frameworks, integrations, APIs. &lt;30 hrs&#x2F;wk.<p>- Sr Agentic Engineer — architect and own multi-step agent workflows; track record required. &lt;30 hrs&#x2F;wk.<p>- Agentic Operator — the human-in-the-loop: walk user flows, native-language QA of AI output, and the testing agents can&#x27;t do alone (SSO, captchas, mobile apps). 10–40 hrs&#x2F;wk, open to all levels.<p>- AI-Native Tech &amp; Growth Director<p>- Head of Data Science<p>We&#x27;re also hiring across product, growth, design, and PR — full list at the link.<p>Apply &#x2F; all roles: <a href=\"https:&#x2F;&#x2F;wetheflywheel.com&#x2F;en&#x2F;careers&#x2F;?utm_source=hackernews&amp;utm_medium=forum&amp;utm_campaign=whoishiring_2026-07\" rel=\"nofollow\">https:&#x2F;&#x2F;wetheflywheel.com&#x2F;en&#x2F;careers&#x2F;?utm_source=hackernews&amp;...</a>\n(feed: <a href=\"https:&#x2F;&#x2F;wetheflywheel.com&#x2F;en&#x2F;careers&#x2F;feed.xml\" rel=\"nofollow\">https:&#x2F;&#x2F;wetheflywheel.com&#x2F;en&#x2F;careers&#x2F;feed.xml</a>)",
+    "children": [],
+    "type": "comment"
+   },
+   {
+    "id": 48748003,
+    "author": "justin_sdx",
+    "created_at": "2026-07-01T15:02:50.000Z",
+    "text": "SmarterDx | 150-250k+ + equity + benefits | Remote (US only) | Multiple roles | <a href=\"https:&#x2F;&#x2F;smarterdx.com&#x2F;careers\" rel=\"nofollow\">https:&#x2F;&#x2F;smarterdx.com&#x2F;careers</a><p>SmarterDx builds clinical AI for one of healthcare’s most broken systems: how hospitals get paid for the care they actually deliver.<p>Our physician-designed clinical AI platform reviews the clinical record, understands the nuance of patient care, and helps hospitals capture appropriate reimbursement across the revenue cycle. The core problem is hard: messy clinical data, complex regulations, payer rules, medical reasoning, and real financial stakes. When we get it right, hospitals recover millions in earned revenue, reduce manual review burden, and keep clinical and revenue teams focused on higher-value work.<p>We’ve hit serious scale while keeping the team unusually strong and technical: MD&#x2F;data scientist hybrids, Stanford LLM researchers, former Google and Amazon engineers, former ASF board member, and others who are among the best in their fields. Many teammates have been here since we bootstrapped to $1M+ in contracted revenue before raising capital.<p>In 2025, SmarterDx became part of Smarter Technologies through a $1.1B deal with New Mountain Capital, reaching unicorn status while continuing to operate with the autonomy, urgency, and product velocity that got us here. Before that, we raised $71M from Floodgate, Transformation Capital, and Bessemer, including a $50M Series B.<p>We have real product-market fit: 85+ health systems, 300+ hospital sites, rapid customer growth, and 150% YoY headcount growth (currently at ~550). Now we’re scaling the platform.<p>For more and to apply, see <a href=\"https:&#x2F;&#x2F;smarterdx.com&#x2F;careers\" rel=\"nofollow\">https:&#x2F;&#x2F;smarterdx.com&#x2F;careers</a>",
+    "children": [],
+    "type": "comment"
+   },
+   {
+    "id": 48748008,
+    "author": "WireScreenNYC",
+    "created_at": "2026-07-01T15:02:59.000Z",
+    "text": "WireScreen (Series A) | Senior Software Engineer (Frontend) &amp; Machine Learning Engineer | NYC - hybrid | Full-time | $170k-$220k (frontend) + equity &#x2F; $150-$195k (ML eng) +equity |<p>WireScreen is a fast-growing Sequoia-backed Series A startup building the go-to open source intelligence platform for navigating global supply chains and China-related risk. While China maintains some of the world’s most detailed corporate ownership records, the real challenge is connecting the dots. That’s where we come in: surfacing the networks, relationships, and financial ties behind companies to support national security, compliance, and regulatory oversight.<p>We’re looking for senior software engineers on the frontend to help build the future of our platform: transitioning us to a component-based system all the way through to building beautiful pages that visualize the story of ownership, power, and influence in the Chinese corporate world.<p>For the frontend we’re looking for significant React experience as well as experience with at least one React framework, plus prior experience building or contributing to a component-based design system &amp; data viz work. At least 5 years experience with 8+ being a more likely level for this person.<p>We’re also looking for a machine learning engineers to level up our entity resolution algorithms and expand our use of LLM technology - for that role we’re looking for 4 years experience with training and deploying ML models in clustering problems, so either knowledge graphs, entity resolution, recommendation engines, cohort analysis or outlier&#x2F;anomaly detection.<p>In both cases you’d join an awesome, tight-knit group of great people who are working on real-world problems with big impact.<p>Apply here (Frontend): <a href=\"https:&#x2F;&#x2F;jobs.ashbyhq.com&#x2F;wirescreen&#x2F;de6daaae-eb03-4551-809d-eaae9ce35b15?utm_source=xgRXlw271G\" rel=\"nofollow\">https:&#x2F;&#x2F;jobs.ashbyhq.com&#x2F;wirescreen&#x2F;de6daaae-eb03-4551-809d-...</a>\nApply here (Machine Learning): <a href=\"https:&#x2F;&#x2F;jobs.ashbyhq.com&#x2F;wirescreen&#x2F;0a29bcab-59eb-4766-941b-643b9fb011e5?utm_source=xgRXlw271G\" rel=\"nofollow\">https:&#x2F;&#x2F;jobs.ashbyhq.com&#x2F;wirescreen&#x2F;0a29bcab-59eb-4766-941b-...</a><p>Or you can reach out to me directly at leo.green@wirescreen.ai - I lead recruiting here at WireScreen, but if I don&#x27;t know the answer I&#x27;ll ping our engineering folks and come back to you fast.",
+    "children": [],
+    "type": "comment"
+   },
+   {
+    "id": 48749297,
+    "author": "iktftbh",
+    "created_at": "2026-07-01T16:18:31.000Z",
+    "text": "don&#x27;t waste your time with these guys",
+    "children": [],
+    "type": "comment"
+   },
+   {
+    "id": 48794583,
+    "author": "mooreds",
+    "created_at": "2026-07-05T14:33:16.000Z",
+    "text": "FusionAuth | Principal Software Engineer, Senior Java Engineer - Cloud, Account Executive | Varies between REMOTE (in USA, also in Europe but only for the account exec position) and ONSITE in Denver, CO, USA, details in each job desc | Salary ranges for the Principal Software Engineer it is 225k-270k, but the Euro positions don&#x27;t have them :(<p>At FusionAuth, our mission is to make authentication and authorization simple and secure for every developer building web and mobile applications. We want devs to stop worrying about auth and focus on building something awesome.<p>There are a lot of companies in the auth space, but we feel like we have something special:<p>* a relatively unique deployment model (self-host on-prem, run in your cloud or let us operate it for you in ours)<p>* A well designed API first approach; one customer compared our APIs to petrichor<p>* a mature product (the code base is nine+ years old and we&#x27;ve found and fixed a lot of the sharp edges around core login use cases; but don&#x27;t worry, there are plenty more features to add)<p>* a full featured free-as-in-beer version which makes the sales cycle easier; prospects often come in having prototyped an integration<p>Our core software is commercial. We open source much of our supporting infrastructure. Technologies and standards that you will work with: modern Java, PostgreSQL, Docker, Kubernetes, MySQL, OAuth, SAML, OIDC.<p>Learn more, including benefits and salaries, and apply here: <a href=\"https:&#x2F;&#x2F;fusionauth.io&#x2F;careers&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;fusionauth.io&#x2F;careers&#x2F;</a> ( Click&#x2F;tap the &#x27;View open positions&#x27; orange button. )",
+    "children": [],
+    "type": "comment"
+   },
+   {
+    "id": 48749999,
+    "author": "deadpost",
+    "created_at": "2026-07-01T16:00:00Z",
+    "text": null,
+    "children": [],
+    "type": "comment"
+   }
+  ]
+ }
+}

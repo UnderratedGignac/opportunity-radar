@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Crunchbase News</title>
+	<atom:link href="https://news.crunchbase.com/feed/" rel="self" type="application/rss+xml" />
+	<link>https://news.crunchbase.com/</link>
+	<description>Data-driven reporting on private markets, startups, founders, and investors</description>
+	<lastBuildDate>Mon, 06 Jul 2026 17:27:59 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.8.5</generator>
+
+<image>
+	<url>https://news.crunchbase.com/wp-content/uploads/cb_news_favicon-150x150.png</url>
+	<title>Crunchbase News</title>
+	<link>https://news.crunchbase.com/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+	<item>
+		<title>North American Startup Funding Shattered Records In First Half Of 2026, Driven By AI</title>
+		<link>https://news.crunchbase.com/venture/na-startup-funding-ma-shattered-records-ai-q2-2026/</link>
+		
+		<dc:creator><![CDATA[Joanna Glasner]]></dc:creator>
+		<pubDate>Tue, 07 Jul 2026 11:00:42 +0000</pubDate>
+				<category><![CDATA[Artificial intelligence]]></category>
+		<category><![CDATA[M&A]]></category>
+		<category><![CDATA[Public Markets]]></category>
+		<category><![CDATA[Quarterly and annual reports]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<category><![CDATA[unicorn]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93798</guid>
+
+					<description><![CDATA[Overall, investment in U.S. and Canadian startups totaled a staggering $392 billion for the first half of 2026, per Crunchbase data, dwarfing anything we’ve seen before.]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/space-quarterly-n-am-1024x576.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/space-quarterly-n-am-1024x576.jpg</image>	</item>
+<item>
+		<title>Sector Snapshot: Cleantech Startup Funding Stabilizes As Energy Demand Grows</title>
+		<link>https://news.crunchbase.com/venture/startup-funding-clean-energy-exits-ipo-q2-2026/</link>
+		
+		<dc:creator><![CDATA[Joanna Glasner]]></dc:creator>
+		<pubDate>Mon, 06 Jul 2026 11:00:35 +0000</pubDate>
+				<category><![CDATA[Artificial intelligence]]></category>
+		<category><![CDATA[Clean tech and energy]]></category>
+		<category><![CDATA[Liquidity]]></category>
+		<category><![CDATA[Public Markets]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<category><![CDATA[AI]]></category>
+		<category><![CDATA[clean energy]]></category>
+		<category><![CDATA[unicorn]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93792</guid>
+
+					<description><![CDATA[In the first half of this year, investors poured $15 billion into seed- through growth-stage rounds for companies in Crunchbase cleantech, EV and sustainability-focused categories. That puts funding on track to slightly exceed the 2025 tally, which was the lowest in several years.]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/energy-tech.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/energy-tech.jpg</image>	</item>
+<item>
+		<title>A Year Of Misplaced Fear (And Why It’s Time For Investors To Leave The Crowd)</title>
+		<link>https://news.crunchbase.com/venture/megafund-vs-emerging-managers-zulkosky-recast/</link>
+		
+		<dc:creator><![CDATA[Guest Author]]></dc:creator>
+		<pubDate>Mon, 06 Jul 2026 11:00:03 +0000</pubDate>
+				<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93787</guid>
+
+					<description><![CDATA[Many venture capital LPs have reacted to recent economic uncertainty by concentrating investments in megafunds, mistaking perceived safety for better returns while potentially sacrificing the higher upside that venture investing is meant to deliver. In this guest commentary, Sara Zulkosky,  co-founder and managing partner of Recast Capital, contends that smaller emerging VC managers are a more attractive source of long-term returns for investors willing to look beyond the crowd.]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/concentrated-capital.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/concentrated-capital.jpg</image>	</item>
+<item>
+		<title>The Week’s 10 Biggest Funding Rounds: AI, Energy And Biotech Lead The Way</title>
+		<link>https://news.crunchbase.com/venture/biggest-funding-rounds-ai-energy-biotech-joulent/</link>
+		
+		<dc:creator><![CDATA[Joanna Glasner]]></dc:creator>
+		<pubDate>Thu, 02 Jul 2026 17:12:50 +0000</pubDate>
+				<category><![CDATA[Artificial intelligence]]></category>
+		<category><![CDATA[Clean tech and energy]]></category>
+		<category><![CDATA[Communications tech]]></category>
+		<category><![CDATA[Enterprise]]></category>
+		<category><![CDATA[Health, Wellness & Biotech]]></category>
+		<category><![CDATA[Real estate & property tech]]></category>
+		<category><![CDATA[SaaS]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<category><![CDATA[unicorn]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93794</guid>
+
+					<description><![CDATA[U.S. startups announced sizable funding rounds at a steady clip during a truncated holiday week, with energy and AI leading the way. Houston-based energy startup Joulent secured the biggest round, a $1.75 billion strategic financing.]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/Top_10_.jpeg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/Top_10_.jpeg</image>	</item>
+<item>
+		<title>Crunchbase Data: Global Startup Investment Hit Record $510B In H1 2026 As AI Boom Accelerates Funding And Exits</title>
+		<link>https://news.crunchbase.com/venture/global-startup-exits-ipo-ma-soar-ai-q2-h1-2026/</link>
+		
+		<dc:creator><![CDATA[Gené Teare]]></dc:creator>
+		<pubDate>Thu, 02 Jul 2026 11:00:47 +0000</pubDate>
+				<category><![CDATA[Artificial intelligence]]></category>
+		<category><![CDATA[M&A]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<category><![CDATA[unicorn]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93740</guid>
+
+					<description><![CDATA[Investors poured more than $200 billion into startups globally in the just-ended quarter, making Q2 2026 the second-largest quarter on record, our data shows. And, with IPOs and acquisitions returning in force, the second quarter notched one of the strongest periods for venture-backed exits in years. ]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/space-quarterly-global-1024x576.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/space-quarterly-global-1024x576.jpg</image>	</item>
+<item>
+		<title>The Crunchbase Tech Layoffs Tracker</title>
+		<link>https://news.crunchbase.com/startups/tech-layoffs/</link>
+		
+		<dc:creator><![CDATA[Crunchbase News]]></dc:creator>
+		<pubDate>Wed, 01 Jul 2026 17:50:30 +0000</pubDate>
+				<category><![CDATA[Economy]]></category>
+		<category><![CDATA[Job market]]></category>
+		<category><![CDATA[Layoffs]]></category>
+		<category><![CDATA[Public Markets]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[unicorn]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=84369</guid>
+
+					<description><![CDATA[Over 127,000 workers at U.S.-based tech companies were laid off in mass job cuts in 2025, per a Crunchbase News tally, and the layoffs have continued into 2026. See the latest companies to cut roles.]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/Layoffs-scissors.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/Layoffs-scissors.jpg</image>	</item>
+<item>
+		<title>London-Based Tapestry VC Closes On $80M Third Fund To Invest In Repeat European Founders</title>
+		<link>https://news.crunchbase.com/venture/80m-repeat-founders-fund-europe-na-tapestry/</link>
+		
+		<dc:creator><![CDATA[Gené Teare]]></dc:creator>
+		<pubDate>Wed, 01 Jul 2026 07:01:52 +0000</pubDate>
+				<category><![CDATA[Artificial intelligence]]></category>
+		<category><![CDATA[Manufacturing]]></category>
+		<category><![CDATA[Robotics]]></category>
+		<category><![CDATA[Seed funding]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Transportation & Logistics]]></category>
+		<category><![CDATA[Venture]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93781</guid>
+
+					<description><![CDATA[Tapestry VC has closed an $80 million third fund to double down on Europe’s repeat founders and expects the coming wave of AI exits to produce yet another generation of experienced founders.
+
+]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/Giant_Funding.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/Giant_Funding.jpg</image>	</item>
+<item>
+		<title>Exclusive: No More Side Hustles: Why AI Startup Omnea Will Give Employees $250K To Openly Plan Their Next Startup</title>
+		<link>https://news.crunchbase.com/startups/omnea-funding-employees-future-founders-freeman/</link>
+		
+		<dc:creator><![CDATA[Judy Rider]]></dc:creator>
+		<pubDate>Tue, 30 Jun 2026 13:30:16 +0000</pubDate>
+				<category><![CDATA[Artificial intelligence]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93779</guid>
+
+					<description><![CDATA[Omnea, a London-based artificial intelligence software company that helps businesses manage their supplier spending, is challenging traditional venture models with the launch of the Omnea Future Founders Fund to give its employees who have completed five years of service a chance to pitch for $250,000 in seed funding to launch their own companies.]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/money-kites-1024x576.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/money-kites-1024x576.jpg</image>	</item>
+<item>
+		<title>We Need To Save Venture Capital From Bad Data</title>
+		<link>https://news.crunchbase.com/venture/data-funding-solutions-ai-landgren-gilion/</link>
+		
+		<dc:creator><![CDATA[Guest Author]]></dc:creator>
+		<pubDate>Tue, 30 Jun 2026 11:00:56 +0000</pubDate>
+				<category><![CDATA[Artificial intelligence]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93773</guid>
+
+					<description><![CDATA[Venture capital firms are using AI the wrong way, argues Gilion's Henrik Landgren, who says that building better data infrastructure and connecting directly to sources like financial, payment and accounting systems would improve due diligence, help investors identify overlooked startups, and make investment decisions both faster and more accurate.]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/AI-generated.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/AI-generated.jpg</image>	</item>
+<item>
+		<title>GV’s Dave Munichiello On Qualcomm’s Modular Purchase, The Firm&#8217;s 10x Return And The Shift In AI Software</title>
+		<link>https://news.crunchbase.com/venture/ma-ai-semiconductors-hardware-qa-munichiello-gvs/</link>
+		
+		<dc:creator><![CDATA[Judy Rider]]></dc:creator>
+		<pubDate>Tue, 30 Jun 2026 11:00:26 +0000</pubDate>
+				<category><![CDATA[Artificial intelligence]]></category>
+		<category><![CDATA[IPO]]></category>
+		<category><![CDATA[Liquidity]]></category>
+		<category><![CDATA[Public Markets]]></category>
+		<category><![CDATA[Semiconductors and 5G]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<guid isPermaLink="false">https://news.crunchbase.com/?p=93771</guid>
+
+					<description><![CDATA[The artificial intelligence space saw two major developments last week that highlight how technology companies are trying to manage the soaring costs and complexity of AI computing. In an interview with Crunchbase News, Dave Munichiello, a managing partner at GV, discusses the mechanics behind the Qualcomm-Modular deal, the practical realities of managing hardware scarcity, and what the current wave of consolidation means for the future of independent startups.]]></description>
+										
+					
+		
+		
+		<enclosure url='https://news.crunchbase.com/wp-content/uploads/Computer_chip_02.jpg' length='0' type='image/jpeg' /><image>https://news.crunchbase.com/wp-content/uploads/Computer_chip_02.jpg</image>	</item></channel></rss>

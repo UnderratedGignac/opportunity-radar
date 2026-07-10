@@ -1,88 +1,107 @@
-"""Scraper smoke tests — no API keys or DB required.
+"""Live smoke tests for the scraper suite (network required, tolerant of
+empty results — a blocked feed must not fail CI, but a shape change must).
 
-Run: python tests/test_scrapers.py
+Offline unit tests live in test_funding_news.py, test_job_boards.py,
+test_sec_edgar.py, test_hn_hiring.py, test_contacts.py.
+
+Run directly: python tests/test_scrapers.py
 """
+
+from __future__ import annotations
+
 import asyncio
 import sys
-import os
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from scrapers.crunchbase import fetch_recent_funding
-from scrapers.linkedin_jobs import scrape_jobs_for_company
+from scrapers.contacts import get_contacts
+from scrapers.funding_news import fetch_funding_events
+from scrapers.hn_hiring import fetch_hiring_posts
+from scrapers.job_boards import gtm_hiring_summary
+from scrapers.sec_edgar import fetch_form_d_filings
 from scrapers.website_monitor import check_website
-from scrapers.apollo import get_contacts
 
 
-async def test_crunchbase():
-    events = await fetch_recent_funding(limit=5)
-    assert isinstance(events, list), "Expected list"
-    print(f"  crunchbase: {len(events)} funding events returned")
+async def test_funding_news_live():
+    events = await fetch_funding_events(days=7, limit=20)
+    assert isinstance(events, list)
     if events:
         e = events[0]
-        assert "title" in e and "signal_detail" in e, f"Missing keys: {e.keys()}"
-        print(f"  sample: {e['signal_detail']}")
+        assert "company" in e and "detail" in e and e["signal_type"] == "funding"
+        print(f"  sample: {e['company']} — {e['detail']}")
+    print(f"  {len(events)} funding events")
 
 
-async def test_jobs():
-    signals = await scrape_jobs_for_company("Stripe", limit=5)
-    assert isinstance(signals, list), "Expected list"
-    print(f"  jobs: {len(signals)} job signals for Stripe")
-    if signals:
-        s = signals[0]
-        assert "signal_type" in s and "detail" in s, f"Missing keys: {s.keys()}"
-        print(f"  sample: [{s['signal_type']}] {s['detail']}")
+async def test_job_boards_live():
+    summary = await gtm_hiring_summary("Vercel", "vercel.com")
+    assert isinstance(summary, dict)
+    if summary:
+        assert "board" in summary and "gtm_jobs" in summary
+        print(f"  vercel: {summary['gtm_jobs']} GTM roles on {summary['board']}")
 
 
-async def test_website():
+async def test_hn_hiring_live():
+    posts = await fetch_hiring_posts(limit=50)
+    assert isinstance(posts, list)
+    if posts:
+        p = posts[0]
+        assert "company" in p and "detail" in p and p["signal_type"] == "hiring"
+        print(f"  sample: {p['company']}")
+    print(f"  {len(posts)} HN hiring posts")
+
+
+async def test_sec_edgar_live():
+    filings = await fetch_form_d_filings(days=3, limit=10, detail_limit=2)
+    assert isinstance(filings, list)
+    if filings:
+        f = filings[0]
+        assert "company" in f and f["signal_type"] == "funding"
+        print(f"  sample: {f['company']} — {f['detail']}")
+    print(f"  {len(filings)} Form D filings")
+
+
+async def test_website_monitor_live():
     signals = await check_website("stripe.com")
-    assert isinstance(signals, list), "Expected list"
-    print(f"  website: {len(signals)} page signals for stripe.com")
+    assert isinstance(signals, list)
     if signals:
-        s = signals[0]
-        assert "signal_type" in s and "detail" in s, f"Missing keys: {s.keys()}"
-        print(f"  sample: {s['detail']} ({s['source_url']})")
+        assert "signal_type" in signals[0] and "detail" in signals[0]
+    print(f"  {len(signals)} website signals")
 
 
-async def test_apollo_contacts():
-    contacts = await get_contacts("stripe.com")
-    assert isinstance(contacts, list), "Expected list"
-    assert len(contacts) > 0, "Expected at least one contact"
+async def test_contacts_deterministic():
+    contacts = await get_contacts("stripe.com", "Stripe")
+    assert len(contacts) > 0
     for c in contacts:
-        assert c.get("first_name"), f"Missing first_name: {c}"
-        assert c.get("title"), f"Missing title: {c}"
-        assert "email_patterns" in c, f"Missing email_patterns: {c}"
-    print(f"  contacts: {len(contacts)} pattern-inferred contacts for stripe.com")
-    print(f"  sample: {contacts[0]['title']} -> {contacts[0]['most_likely_email']}")
+        # honest output: role suggestions only, never fabricated people
+        assert c["first_name"] is None and c["last_name"] is None
+        assert c["title"] and c["linkedin_url"].startswith("https://")
+    print(f"  {len(contacts)} role suggestions")
 
 
 TESTS = [
-    ("crunchbase", test_crunchbase),
-    ("jobs (Indeed RSS)", test_jobs),
-    ("website monitor", test_website),
-    ("apollo contacts", test_apollo_contacts),
+    ("funding_news live", test_funding_news_live),
+    ("job_boards live", test_job_boards_live),
+    ("hn_hiring live", test_hn_hiring_live),
+    ("sec_edgar live", test_sec_edgar_live),
+    ("website_monitor live", test_website_monitor_live),
+    ("contacts deterministic", test_contacts_deterministic),
 ]
 
 
-async def main():
-    print("=" * 55)
-    print("Opportunity Radar — Scraper Tests")
-    print("=" * 55)
-    passed = failed = 0
+async def main() -> int:
+    failed = 0
     for name, fn in TESTS:
-        print(f"\n[{name}]")
+        print(f"[TEST] {name}")
         try:
             await fn()
-            print(f"  >> PASS")
-            passed += 1
+            print(f"[PASS] {name}\n")
         except Exception as e:
-            print(f"  >> FAIL: {e}")
             failed += 1
-    print(f"\n{'='*55}")
-    print(f"Results: {passed} passed, {failed} failed")
-    return failed == 0
+            print(f"[FAIL] {name}: {e}\n")
+    print(f"{'=' * 50}\n{len(TESTS) - failed}/{len(TESTS)} passed")
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    ok = asyncio.run(main())
-    sys.exit(0 if ok else 1)
+    raise SystemExit(asyncio.run(main()))

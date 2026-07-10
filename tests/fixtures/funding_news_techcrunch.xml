@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Venture Capital News | TechCrunch</title>
+	<atom:link href="https://techcrunch.com/category/venture/feed/" rel="self" type="application/rss+xml" />
+	<link>https://techcrunch.com/category/venture/</link>
+	<description>Startup and Technology News</description>
+	<lastBuildDate>Tue, 07 Jul 2026 18:49:30 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.4</generator>
+
+<image>
+	<url>https://techcrunch.com/wp-content/uploads/2015/02/cropped-cropped-favicon-gradient.png?w=32</url>
+	<title>Venture Capital News | TechCrunch</title>
+	<link>https://techcrunch.com/category/venture/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+	<item>
+		<title>VC firm Chemistry is raising $500M for its second fund</title>
+		<link>https://techcrunch.com/2026/07/07/chemistry-ventures-is-raising-500m-for-its-second-fund/</link>
+		
+		<dc:creator><![CDATA[Dominic-Madori Davis]]></dc:creator>
+		<pubDate>Tue, 07 Jul 2026 15:02:02 +0000</pubDate>
+				<category><![CDATA[Venture]]></category>
+		<category><![CDATA[a16z]]></category>
+		<category><![CDATA[bessemer]]></category>
+		<category><![CDATA[chemistry]]></category>
+		<category><![CDATA[In Brief]]></category>
+		<category><![CDATA[index]]></category>
+		<category><![CDATA[VC]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3139591</guid>
+
+					<description><![CDATA[Chemistry Ventures, the VC firm launched by Bessemer, Index Ventures, and Andreessen Horowitz alums, is raising $500M for its second fund.]]></description>
+		
+		
+		
+			</item>
+<item>
+		<title>AI law startup Norm raises $120M, hits unicorn valuation</title>
+		<link>https://techcrunch.com/2026/07/07/ai-law-startup-norm-raises-120m-hits-unicorn-valuation/</link>
+		
+		<dc:creator><![CDATA[Dominic-Madori Davis]]></dc:creator>
+		<pubDate>Tue, 07 Jul 2026 14:35:42 +0000</pubDate>
+				<category><![CDATA[Fundraising]]></category>
+		<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<category><![CDATA[In Brief]]></category>
+		<category><![CDATA[Khosla Ventures]]></category>
+		<category><![CDATA[Legal AI]]></category>
+		<category><![CDATA[legal tech]]></category>
+		<category><![CDATA[Norm]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3139589</guid>
+
+					<description><![CDATA[AI law startup Norm has raised a $120 million Series C round led by Khosla Ventures, valuing the startup at $1.2 billion. ]]></description>
+		
+		
+		
+			</item>
+<item>
+		<title>What is Bending Spoons? The little-known AOL and Vimeo owner that&#8217;s now public</title>
+		<link>https://techcrunch.com/2026/07/05/what-is-bending-spoons-everything-to-know-about-aols-acquirer/</link>
+		
+		<dc:creator><![CDATA[Anna Heim]]></dc:creator>
+		<pubDate>Sun, 05 Jul 2026 13:33:32 +0000</pubDate>
+				<category><![CDATA[Venture]]></category>
+		<category><![CDATA[AOL]]></category>
+		<category><![CDATA[Bending Spoons]]></category>
+		<category><![CDATA[evergreens]]></category>
+		<category><![CDATA[Mergers and Acquisitions]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3064419</guid>
+
+					<description><![CDATA[Bending Spoons remains largely unknown, even as its portfolio of products has served more than a billion people. ]]></description>
+		
+		
+		
+			</item>
+<item>
+		<title>Almost 90 new unicorns have been minted so far this year — here they are</title>
+		<link>https://techcrunch.com/2026/07/05/almost-40-new-unicorns-have-been-minted-so-far-this-year-here-they-are/</link>
+		
+		<dc:creator><![CDATA[Dominic-Madori Davis]]></dc:creator>
+		<pubDate>Sun, 05 Jul 2026 12:47:39 +0000</pubDate>
+				<category><![CDATA[Startups]]></category>
+		<category><![CDATA[Venture]]></category>
+		<category><![CDATA[unicorns]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3101494</guid>
+
+					<description><![CDATA[With AI igniting an investor frenzy, more startups are achieving unicorn status every month. ]]></description>
+		
+		
+		
+			</item>
+<item>
+		<title>Patronus AI lands $50M to build ‘digital worlds’ that stress-test AI agents</title>
+		<link>https://techcrunch.com/2026/06/25/patronus-ai-lands-50m-to-build-digital-worlds-that-stress-test-ai-agents/</link>
+		
+		<dc:creator><![CDATA[Marina Temkin]]></dc:creator>
+		<pubDate>Thu, 25 Jun 2026 20:19:25 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Venture]]></category>
+		<category><![CDATA[ai benchmarks]]></category>
+		<category><![CDATA[evaluation]]></category>
+		<category><![CDATA[Greenfield Partners]]></category>
+		<category><![CDATA[lightspeed]]></category>
+		<category><![CDATA[Notable Capital]]></category>
+		<category><![CDATA[Patronus AI]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3136499</guid>
+
+					<description><![CDATA[Agent-testing startup Patronus AI, founded by former Meta AI researchers, is experiencing nearly insatiable demand, its investor says.]]></description>
+		
+		
+		
+			</item>
+<item>
+		<title>Seedcamp raises $320M for its new fund to expand its US footprint</title>
+		<link>https://techcrunch.com/2026/06/22/seedcamp-raises-320m-for-its-new-fund-to-expand-its-us-footprint/</link>
+		
+		<dc:creator><![CDATA[Ram Iyer]]></dc:creator>
+		<pubDate>Mon, 22 Jun 2026 13:37:25 +0000</pubDate>
+				<category><![CDATA[Venture]]></category>
+		<category><![CDATA[early stage funding]]></category>
+		<category><![CDATA[SeedCamp]]></category>
+		<guid isPermaLink="false">https://techcrunch.com/?p=3134779</guid>
+
+					<description><![CDATA[After 18 years of focusing on Europe, early-stage investor Seedcamp said that it has raised $320 million for its latest fund, which will see it expanding its presence in the United States.]]></description>
+		
+		
+		
+			</item></channel></rss>

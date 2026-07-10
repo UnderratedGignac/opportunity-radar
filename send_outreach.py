@@ -85,47 +85,79 @@ def _guess_emails(row: dict) -> list[str]:
 
 # ── Email template ────────────────────────────────────────────────────────────
 
-def _build_email(row: dict, to_email: str) -> tuple[str, str]:
-    """Return (subject, body) for a prospect row."""
-    company   = row.get("Company", "your company")
-    niche     = row.get("Niche / Specialty", "AI automation").strip() or "AI automation"
+SAMPLES_DIR = Path(__file__).parent / "samples"
+
+
+def _load_teaser(samples_dir: Path = SAMPLES_DIR, count: int = 3) -> list[str]:
+    """Top rows of the newest intent_report_*.csv as one-line teasers."""
+    try:
+        reports = sorted(samples_dir.glob("intent_report_*.csv"))
+    except OSError:
+        return []
+    if not reports:
+        return []
+    lines: list[str] = []
+    with open(reports[-1], newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            company = row.get("Company", "").strip()
+            if not company:
+                continue
+            detail = row.get("FundingDetail", "").strip() or row.get("Signals", "").strip()
+            gtm = row.get("GTMOpenRoles", "").strip()
+            if gtm and gtm not in ("0", ""):
+                plural = "" if gtm == "1" else "s"
+                gtm_bit = f"hiring {gtm} GTM role{plural}"
+                detail = f"{detail}, {gtm_bit}" if detail else gtm_bit
+            lines.append(f"{company} — {detail}" if detail else company)
+            if len(lines) >= count:
+                break
+    return lines
+
+
+def _build_email(row: dict, to_email: str, teaser: list[str]) -> tuple[str, str]:
+    """Return (subject, body) selling the weekly buying-intent feed."""
+    company   = row.get("Company", "your agency")
+    niche     = row.get("Niche / Specialty", "").strip()
     founder   = row.get("Founder", "").strip()
 
     greeting = f"Hi {founder.split()[0]}," if founder else "Hi there,"
 
-    # Pick a hook based on niche keywords
+    # Frame the leads in the prospect's own service language
     niche_lower = niche.lower()
     if "n8n" in niche_lower:
-        angle = "n8n workflow systems"
+        angle = "n8n automation projects"
     elif "make" in niche_lower or "zapier" in niche_lower:
-        angle = "Make.com / Zapier automations"
+        angle = "Make.com / Zapier builds"
     elif "voice" in niche_lower:
-        angle = "voice AI agent pipelines"
+        angle = "voice AI deployments"
     elif "lead gen" in niche_lower or "outbound" in niche_lower:
-        angle = "outbound lead-gen automation"
+        angle = "outbound campaigns"
     elif "revops" in niche_lower or "crm" in niche_lower:
-        angle = "RevOps and CRM automation"
-    elif "healthcare" in niche_lower or "hipaa" in niche_lower:
-        angle = "HIPAA-compliant automation pipelines"
+        angle = "RevOps / CRM projects"
     else:
-        angle = "AI agent and automation builds"
+        angle = "AI automation projects"
 
-    subject = f"Freelance AI/Automation Engineer - {company}"
+    if teaser:
+        teaser_block = "\n".join(f"• {line}" for line in teaser)
+        proof = f"""From this week's scan:
+
+{teaser_block}
+
+Companies like these just got budget and are hiring the roles that usually mean "we need outside help" — the exact window where agencies win {angle}."""
+    else:
+        proof = f"""Every week it surfaces companies that just got budget and are hiring the roles that usually mean "we need outside help" — the exact window where agencies win {angle}."""
+
+    subject = f"3 warm leads for {company}"
 
     body = f"""{greeting}
 
-I came across {company} and was impressed by your work in {niche}.
+Quick one. I run a system that scans funding announcements, SEC filings, and hiring boards to catch companies at the moment they have fresh budget and an automation problem.
 
-I'm Elie Haddad, a freelance AI automation engineer with hands-on experience building {angle} — end-to-end, from scraping and data pipelines through to LLM integration and deployment.
+{proof}
 
-I'm looking to take on contract work with agencies like yours and would love to contribute to client projects or internal tooling.
+Want the full report? 12 companies, each with the why-now, who to contact, and a suggested opener. Reply "send it" and this week's edition is yours, free.
 
-A few things I've shipped recently:
-• AI-powered outreach pipeline (signal detection → scoring → personalized copy)
-• Multi-agent job application system with Gmail, calendar, and portal automation
-• B2B lead discovery scrapers with Bing News, Crunchbase RSS, and Apify integrations
-
-Would you be open to a quick call this week to explore fit?
+If it's useful: $149/mo for a fresh list every Monday, tuned to your niche. Cancel anytime.
 
 Best,
 Elie Haddad
@@ -198,6 +230,11 @@ def main() -> None:
             print("Aborted.")
             return
 
+    teaser = _load_teaser()
+    if not teaser:
+        print("WARNING: no samples/intent_report_*.csv found — emails will go out "
+              "without the 3-lead teaser. Run report.py first for a stronger pitch.\n")
+
     sent = 0
     skipped = 0
 
@@ -211,7 +248,7 @@ def main() -> None:
             continue
 
         to_email = candidates[0]
-        subject, body = _build_email(row, to_email)
+        subject, body = _build_email(row, to_email, teaser)
 
         if args.dry_run:
             print(f"  [DRY]   {company}")

@@ -3,10 +3,10 @@
 Scans free public sources for buying-intent signals at target companies.
 
 Sources (all free, no API keys required):
-  1. Google News RSS  — press releases, exec changes, funding announcements
-  2. Crunchbase RSS   — funding rounds
-  3. Indeed RSS       — hiring signals
-  4. Website monitor  — pricing/product page changes
+  1. Google News RSS       — press releases, exec changes, funding announcements
+  2. ATS job boards        — Greenhouse/Lever/Ashby public APIs, GTM hiring signals
+  3. Hacker News           — company mentions
+  4. Website monitor       — pricing/product page changes
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ import aiohttp
 from agents.base_agent import BaseAgent
 from llm.claude_router import ClaudeRouter
 from models.signal import Signal, SignalType
+from scrapers.job_boards import scan_company_jobs
 from scrapers.website_monitor import check_website
 
 logger = logging.getLogger("radar.agent.signal_collection")
@@ -209,23 +210,30 @@ class SignalCollectionAgent(BaseAgent[list[str], list[Signal]]):
             logger.warning("Google News scrape failed for %s: %s", domain, e)
             return []
 
-    # ── Indeed RSS (free, no key) ─────────────────────────────────────────────
+    # ── ATS job boards (Greenhouse/Lever/Ashby public APIs, free, no key) ─────
 
     async def _scrape_jobs(self, domain: str) -> list[Signal]:
-        company_name = domain.split(".")[0].replace("-", "+")
-        rss_url = f"https://www.indeed.com/rss?q={company_name}&sort=date&fromage=14"
+        company_name = domain.split(".")[0].replace("-", " ").title()
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    rss_url, headers=_HEADERS, timeout=aiohttp.ClientTimeout(total=8)
-                ) as resp:
-                    if resp.status != 200:
-                        return []
-                    text = await resp.text()
-            return await self._extract_signals(text[:3000], rss_url, "job_board", domain)
+            items = await scan_company_jobs(company_name, domain, recent_days=30)
         except Exception as e:
-            logger.debug("Indeed RSS skipped for %s: %s", domain, e)
+            logger.debug("Job board scan skipped for %s: %s", domain, e)
             return []
+        signals: list[Signal] = []
+        for item in items:
+            try:
+                sig_type = SignalType(item.get("signal_type", "hiring"))
+            except ValueError:
+                sig_type = SignalType.HIRING
+            signals.append(Signal(
+                company_domain=domain,
+                signal_type=sig_type,
+                detail=item.get("detail", ""),
+                source_url=item.get("source_url", f"https://{domain}"),
+                source_type="job_board",
+                confidence=float(item.get("confidence", 0.85)),
+            ))
+        return signals
 
     # ── LLM extraction ────────────────────────────────────────────────────────
 
