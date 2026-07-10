@@ -62,6 +62,15 @@ def test_pitch_category_tailors_the_service_line():
     assert "invoice" in finance.lower() or "payment" in finance.lower()
 
 
+def test_pitch_uses_correct_article_before_role():
+    _, vowel = build_pitch(_lead(role_title="Accountant"))
+    assert "hiring for an Accountant" in vowel
+    assert "hiring for a Accountant" not in vowel
+
+    _, consonant = build_pitch(_lead(role_title="Data Entry Clerk"))
+    assert "hiring for a Data Entry Clerk" in consonant
+
+
 def test_pitch_is_plain_text_no_placeholders_left():
     subject, body = build_pitch(_lead())
     for token in ["[First name]", "[Company]", "[role]", "{", "}", "~$Y", "[WhatsApp"]:

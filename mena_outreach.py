@@ -40,6 +40,10 @@ def _anchor(category: str) -> str:
     return f"~${mid:,}/year"
 
 
+def _article(word: str) -> str:
+    return "an" if word[:1].lower() in "aeiou" else "a"
+
+
 def build_pitch(lead: dict) -> tuple[str, str]:
     """Return (subject, body) for a caught-hiring lead."""
     company = lead.get("company", "your team")
@@ -62,7 +66,7 @@ def build_pitch(lead: dict) -> tuple[str, str]:
 
     body = f"""Hi there,
 
-I saw {company} is hiring for a {role} — congrats on the growth. Before you commit {_anchor(category)} to that seat, one thought: most of that role is {pain}.
+I saw {company} is hiring for {_article(role)} {role} — congrats on the growth. Before you commit {_anchor(category)} to that seat, one thought: most of that role is {pain}.
 
 {service}{arabic}
 
