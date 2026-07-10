@@ -170,6 +170,43 @@ async def test_find_leads_excludes_software_companies():
     assert leads == []
 
 
+# ---------------------------------------------------------------- curl fallback (LinkedIn TLS-fingerprint bot-block)
+
+async def test_fetch_company_page_via_curl_used_as_fallback():
+    """LinkedIn's guest company-about page returns HTTP 999 (bot block) to
+    aiohttp's TLS fingerprint but 200 to curl.exe — confirmed live 2026-07-10.
+    _fetch_company_page must fall back to shelling out to curl.exe when the
+    plain aiohttp attempt is blocked."""
+    from scrapers.mena_jobs import _fetch_company_page
+
+    async def blocked_aiohttp(session, url, chrome=False):
+        return None  # simulates a 999-blocked aiohttp response
+
+    async def fake_curl(url, headers):
+        assert "linkedin.com/company/" in url
+        return _company_html()
+
+    with patch("scrapers.mena_jobs._fetch_text", blocked_aiohttp), \
+         patch("scrapers.mena_jobs._fetch_via_curl", fake_curl):
+        page = await _fetch_company_page(None, "https://www.linkedin.com/company/unilabsme/")
+    assert page == _company_html()
+
+
+async def test_fetch_company_page_skips_curl_when_aiohttp_succeeds():
+    from scrapers.mena_jobs import _fetch_company_page
+
+    async def working_aiohttp(session, url, chrome=False):
+        return _company_html()
+
+    async def should_not_be_called(url, headers):
+        raise AssertionError("curl fallback should not run when aiohttp succeeds")
+
+    with patch("scrapers.mena_jobs._fetch_text", working_aiohttp), \
+         patch("scrapers.mena_jobs._fetch_via_curl", should_not_be_called):
+        page = await _fetch_company_page(None, "https://www.linkedin.com/company/unilabsme/")
+    assert page == _company_html()
+
+
 async def test_find_leads_excludes_enterprise_by_size():
     # a company that dodges every name-based blocklist (e.g. Kempinski Hotels)
     # must still be excluded once its LinkedIn "Company size" reveals 10,001+

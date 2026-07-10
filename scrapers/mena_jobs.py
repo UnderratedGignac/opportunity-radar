@@ -18,6 +18,7 @@ import asyncio
 import html
 import logging
 import re
+import shutil
 import urllib.parse
 
 import aiohttp
@@ -295,6 +296,42 @@ async def _fetch_text(session: aiohttp.ClientSession, url: str, chrome: bool = F
         return None
 
 
+async def _fetch_via_curl(url: str, headers: dict[str, str]) -> str | None:
+    """Shell out to curl.exe for the LinkedIn company-about page.
+
+    Confirmed live 2026-07-10: LinkedIn's guest company page returns HTTP 999
+    (its bot-block code) to aiohttp's TLS ClientHello fingerprint on ~every
+    request, while curl.exe succeeds reliably on the identical URL — this is
+    TLS/JA3-level bot detection that HTTP headers alone can't work around.
+    """
+    if not shutil.which("curl"):
+        return None
+    cmd = ["curl", "-s", "-L", "--max-time", "15"]
+    for k, v in headers.items():
+        cmd += ["-H", f"{k}: {v}"]
+    cmd.append(url)
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=20)
+        if proc.returncode != 0 or not stdout:
+            return None
+        return stdout.decode("utf-8", errors="replace")
+    except Exception as e:
+        logger.debug("curl fallback failed %s: %s", url, e)
+        return None
+
+
+async def _fetch_company_page(session: aiohttp.ClientSession, url: str) -> str | None:
+    """Fetch a LinkedIn company-about page, falling back to curl.exe when
+    aiohttp gets bot-blocked (see _fetch_via_curl)."""
+    page = await _fetch_text(session, url, chrome=True)
+    if page:
+        return page
+    return await _fetch_via_curl(url, _CHROME_UA)
+
+
 async def find_leads(
     keywords: list[str],
     locations: list[str],
@@ -331,7 +368,8 @@ async def find_leads(
                     industry = None
                     company_size = None
                     co_url = _normalize_company_url(card["company_linkedin_url"]) + "/"
-                    co_page = await _fetch_text(session, co_url, chrome=True)
+                    co_page = await _fetch_company_page(session, co_url)
+                    await asyncio.sleep(0.5)  # politeness between company-page fetches
                     if co_page:
                         website = company_website_from_linkedin(co_page)
                         industry = extract_company_industry(co_page)
