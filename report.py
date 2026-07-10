@@ -31,6 +31,7 @@ CSV_COLUMNS = [
     "Signals",
     "FundingDetail",
     "GTMOpenRoles",
+    "LikelyNeed",
     "Domain",
     "SourceLinks",
     "SuggestedContactTitle",
@@ -42,7 +43,7 @@ _LEGAL_SUFFIXES = {
     "co", "plc", "gmbh", "sas", "bv", "ab", "oy", "srl", "pty",
 }
 
-_ENRICH_LIMIT = 25
+_ENRICH_LIMIT = 50
 _ENRICH_CONCURRENCY = 5
 
 
@@ -138,7 +139,12 @@ async def enrich(candidates: list[dict], limit: int = _ENRICH_LIMIT,
         logger.error("job_boards unavailable: %s", e)
         return
 
-    top = sorted(candidates, key=score_company, reverse=True)[:limit]
+    try:
+        from scrapers.funding_news import negative_signals
+    except Exception:
+        negative_signals = None
+
+    top = rank_candidates(candidates)[:limit]
     sem = asyncio.Semaphore(concurrency)
 
     async def lookup(candidate: dict) -> None:
@@ -149,6 +155,13 @@ async def enrich(candidates: list[dict], limit: int = _ENRICH_LIMIT,
                     candidate["job_board"] = summary
             except Exception as e:
                 logger.warning("job board lookup failed for %s: %s", candidate["name"], e)
+            if negative_signals is not None:
+                try:
+                    negatives = await _maybe_await(negative_signals(candidate["name"]))
+                    if negatives:
+                        candidate["negative_news"] = negatives
+                except Exception as e:
+                    logger.warning("negative-news check failed for %s: %s", candidate["name"], e)
 
     await asyncio.gather(*(lookup(c) for c in top))
 
@@ -162,8 +175,46 @@ def _is_sweet_spot_round(round_type) -> bool:
     return bool(r) and ("seed" in r or "series a" in r)
 
 
+def _is_series_b(round_type) -> bool:
+    return "series b" in str(round_type or "").strip().lower()
+
+
+_EXEC_ROLE_KEYWORDS = ("head of sales", "head of revenue", "vp of sales", "vp sales",
+                       "chief revenue", "cro", "vp of marketing", "vp marketing", "cmo")
+_HIGH_INTENT_KEYWORDS = ("account executive", "sdr", "sales development",
+                         "revops", "revenue operations")
+
+
+def _role_flags(job_board: dict) -> tuple[bool, bool]:
+    """(has exec GTM role, has high-intent role) from the roles list."""
+    roles = [str(r).lower() for r in job_board.get("roles") or []]
+    has_exec = any(kw in role for role in roles for kw in _EXEC_ROLE_KEYWORDS)
+    has_high_intent = any(kw in role for role in roles for kw in _HIGH_INTENT_KEYWORDS)
+    return has_exec, has_high_intent
+
+
+def rank_candidates(candidates: list[dict]) -> list[dict]:
+    """Score-desc ordering; ties broken by raise size (more budget first),
+    then name — never by alphabet alone."""
+    def key(c: dict):
+        best = _best_funding(c) or {}
+        return (
+            -(c.get("score") if c.get("score") is not None else score_company(c)),
+            -(best.get("amount_millions") or 0),
+            (c.get("name") or "").lower(),
+        )
+    return sorted(candidates, key=key)
+
+
 def score_company(candidate: dict) -> int:
-    """Pure 0-100 buying-intent score."""
+    """Pure 0-100 buying-intent score, weighted per signal quality.
+
+    Funding: +30 base, +10 amount sweet spot ($3-100M — enough budget to buy
+    services, not so much that vendor relationships are locked), +10 for
+    seed/Series A (+5 Series B). Job board: +15 any GTM opening, +5 at 3+,
+    +10 for a revenue-leadership opening, +5 for AE/SDR/RevOps. HN post: +10,
+    +5 with GTM roles. Multi-signal +15. Layoffs/hiring-freeze news -30.
+    """
     score = 0
     funding = candidate.get("funding") or []
     hiring = candidate.get("hiring") or []
@@ -171,20 +222,57 @@ def score_company(candidate: dict) -> int:
     gtm_jobs = job_board.get("gtm_jobs") or 0
 
     if funding:
-        score += 45
-        if any((ev.get("amount_millions") or 0) >= 5 for ev in funding):
-            score += 5
+        score += 30
+        if any(3 <= (ev.get("amount_millions") or 0) < 100 for ev in funding):
+            score += 10
         if any(_is_sweet_spot_round(ev.get("round_type")) for ev in funding):
+            score += 10
+        elif any(_is_series_b(ev.get("round_type")) for ev in funding):
             score += 5
     if gtm_jobs > 0:
-        score += 30  # flat cap regardless of role count
-    if hiring:
         score += 15
+        if gtm_jobs >= 3:
+            score += 5
+        has_exec, has_high_intent = _role_flags(job_board)
+        if has_exec:
+            score += 10
+        if has_high_intent:
+            score += 5
+    if hiring:
+        score += 10
         if any(post.get("has_gtm_roles") for post in hiring):
             score += 5
     if funding and (hiring or gtm_jobs > 0):
-        score += 10  # multi-signal bonus
+        score += 15  # signals landing together is the strongest tell
+    if candidate.get("negative_news"):
+        score -= 30  # layoffs / hiring freeze close the buying window
     return max(0, min(100, score))
+
+
+def likely_need(candidate: dict) -> str:
+    """What this company probably needs from an outside agency right now."""
+    job_board = candidate.get("job_board") or {}
+    gtm_jobs = job_board.get("gtm_jobs") or 0
+    has_exec, has_high_intent = _role_flags(job_board)
+    funded = bool(candidate.get("funding"))
+    hn = bool(candidate.get("hiring"))
+
+    if has_exec:
+        return ("Standing up revenue leadership — receptive to RevOps, CRM and "
+                "outbound infrastructure before the new leader's first quarter ends.")
+    if has_high_intent:
+        return ("Scaling outbound — needs pipeline, lead data and sales automation "
+                "while the new reps ramp.")
+    if gtm_jobs > 0:
+        return ("Growing the GTM team — demand gen, content and marketing "
+                "automation services fit this stage.")
+    if funded and not hn:
+        return ("Fresh budget with no GTM hires posted yet — outside help bridges "
+                "the gap this quarter.")
+    if hn:
+        return ("Hiring on a lean budget via HN — an automation-over-headcount "
+                "pitch fits.")
+    return "Early growth signals — worth light-touch monitoring."
 
 
 # --------------------------------------------------------------------------
@@ -412,6 +500,8 @@ def render_markdown(entries: list[dict], generated_on: str) -> str:
         lines.append("")
         lines.append(f"**Why now:** {entry.get('why_now') or why_now(entry)}")
         lines.append("")
+        lines.append(f"**Likely need:** {entry.get('likely_need') or likely_need(entry)}")
+        lines.append("")
         lines.append(f"**Who to contact:** {_contact_line(entry)}")
         lines.append("")
         opener = entry.get("opener") or suggested_opener(entry)
@@ -422,11 +512,14 @@ def render_markdown(entries: list[dict], generated_on: str) -> str:
         "",
         "## Methodology",
         "",
-        "Companies are scored 0-100: recent funding (base 45, bonuses for $5M+ "
-        "rounds and seed/Series A — the sweet spot for buying GTM services), "
-        "open go-to-market roles on public job boards (+30), Hacker News "
-        "'Who is hiring' posts (+15, +5 with GTM roles), and a +10 multi-signal "
-        "bonus when funding and hiring land together.",
+        "Companies are scored 0-100 across weighted signals: recent funding "
+        "(base 30, +10 for the $3-100M sweet spot — enough budget to buy "
+        "services, not so much that vendors are locked in — and +10 for "
+        "seed/Series A), open go-to-market roles on public job boards (+15, "
+        "with extra weight for revenue-leadership and AE/SDR/RevOps openings), "
+        "Hacker News 'Who is hiring' posts, and a +15 multi-signal bonus when "
+        "funding and hiring land in the same window. Companies with recent "
+        "layoffs or a hiring freeze are penalized -30 — a closed buying window.",
         "",
         "Sources: Google News, Crunchbase News, TechCrunch, SEC EDGAR Form D "
         "filings, Hacker News 'Who is hiring' threads, and public ATS job "
@@ -466,6 +559,7 @@ def render_csv_rows(entries: list[dict]) -> list[dict]:
             "Signals": "; ".join(signals),
             "FundingDetail": funding_events[0].get("detail", "") if funding_events else "",
             "GTMOpenRoles": job_board.get("gtm_jobs") or 0,
+            "LikelyNeed": entry.get("likely_need") or likely_need(entry),
             "Domain": entry.get("domain") or "",
             "SourceLinks": " ".join(links),
             "SuggestedContactTitle": suggested_contact_title(entry),
@@ -498,11 +592,11 @@ async def build_report(days: int = 7, top: int = 12) -> list[dict]:
     await enrich(candidates)
     for candidate in candidates:
         candidate["score"] = score_company(candidate)
-    candidates.sort(key=lambda c: (-c["score"], c["name"].lower()))
-    entries = candidates[:top]
+    entries = rank_candidates(candidates)[:top]
     for rank, entry in enumerate(entries, 1):
         entry["rank"] = rank
         entry["why_now"] = why_now(entry)
+        entry["likely_need"] = likely_need(entry)
         entry["opener"] = suggested_opener(entry)
     return entries
 

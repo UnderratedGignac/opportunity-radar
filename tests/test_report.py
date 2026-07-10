@@ -101,40 +101,72 @@ def test_normalize_company_strips_legal_suffixes():
 
 
 # ---------------------------------------------------------------- scoring
+#
+# Weighted multi-signal model. Funding: +30 base, +10 amount sweet spot
+# ($3-100M — enough to spend, not enterprise-locked), +10 seed/series a
+# (+5 series b). Job board: +15 any GTM role, +5 at 3+, +10 exec GTM role,
+# +5 high-intent role (AE/SDR/RevOps). HN: +10, +5 with GTM roles.
+# Multi-signal +15. Negative news (layoffs/freeze) -30. Clamp 0-100.
 
 def test_score_funding_only_base():
     cand = {"name": "A", "funding": [_funding_event(amount_millions=2.0, round_type="unknown")], "hiring": []}
-    assert report.score_company(cand) == 45
+    assert report.score_company(cand) == 30  # tiny raise, unknown round: base only
 
 
-def test_score_funding_amount_and_sweet_spot_round_bonuses():
-    cand = {
+def test_score_funding_amount_and_round_bonuses():
+    sweet = {
         "name": "A",
         "funding": [_funding_event(amount_millions=15.0, round_type="series a")],
         "hiring": [],
     }
-    # 45 base + 5 (>= $5M) + 5 (seed/series a)
-    assert report.score_company(cand) == 55
+    assert report.score_company(sweet) == 50  # 30 + 10 amount + 10 round
 
     seed = {
         "name": "B",
         "funding": [_funding_event(amount_millions=3.0, round_type="seed")],
         "hiring": [],
     }
-    # 45 base + 5 round bonus only (amount < 5M)
-    assert report.score_company(seed) == 50
+    assert report.score_company(seed) == 50  # $3M is inside the sweet spot
+
+    mega = {
+        "name": "C",
+        "funding": [_funding_event(amount_millions=300.0, round_type="series a")],
+        "hiring": [],
+    }
+    # big-round discount: $100M+ companies usually have preferred vendors
+    assert report.score_company(mega) == 40  # 30 + 0 amount + 10 round
+
+    series_b = {
+        "name": "D",
+        "funding": [_funding_event(amount_millions=40.0, round_type="series b")],
+        "hiring": [],
+    }
+    assert report.score_company(series_b) == 45  # 30 + 10 amount + 5 series b
 
 
 def test_score_hn_hiring_only():
     plain = {"name": "C", "funding": [], "hiring": [_hiring_post(has_gtm_roles=False)]}
-    assert report.score_company(plain) == 15
+    assert report.score_company(plain) == 10
     gtm = {"name": "C", "funding": [], "hiring": [_hiring_post(has_gtm_roles=True)]}
-    assert report.score_company(gtm) == 20
+    assert report.score_company(gtm) == 15
 
 
-def test_score_job_board_gtm_only_capped_at_30():
-    cand = {"name": "D", "funding": [], "hiring": [], "job_board": {"gtm_jobs": 9, "total_jobs": 40}}
-    assert report.score_company(cand) == 30
+def test_score_job_board_role_granularity():
+    one_generic = {"name": "D", "funding": [], "hiring": [],
+                   "job_board": {"gtm_jobs": 1, "roles": ["Customer Success Manager"]}}
+    assert report.score_company(one_generic) == 15
+
+    many = {"name": "D", "funding": [], "hiring": [],
+            "job_board": {"gtm_jobs": 4, "roles": ["Customer Success Manager"]}}
+    assert report.score_company(many) == 20  # +5 at 3+ openings
+
+    high_intent = {"name": "D", "funding": [], "hiring": [],
+                   "job_board": {"gtm_jobs": 2, "roles": ["Account Executive"]}}
+    assert report.score_company(high_intent) == 20  # +5 AE/SDR/RevOps
+
+    exec_role = {"name": "D", "funding": [], "hiring": [],
+                 "job_board": {"gtm_jobs": 1, "roles": ["Head of Sales"]}}
+    assert report.score_company(exec_role) == 25  # +10 revenue-leadership hire
 
 
 def test_score_multi_signal_bonus_and_clamp():
@@ -143,19 +175,66 @@ def test_score_multi_signal_bonus_and_clamp():
         "funding": [_funding_event(amount_millions=2.0, round_type="unknown")],
         "hiring": [_hiring_post(has_gtm_roles=False)],
     }
-    # 45 + 15 + 10 multi-signal
-    assert report.score_company(both) == 70
+    assert report.score_company(both) == 55  # 30 + 10 + 15 multi-signal
 
     maxed = {
         "name": "F",
-        "funding": [_funding_event(amount_millions=300.0, round_type="series a")],
+        "funding": [_funding_event(amount_millions=30.0, round_type="series a")],
         "hiring": [_hiring_post(has_gtm_roles=True)],
-        "job_board": {"gtm_jobs": 4, "careers_url": "https://boards.greenhouse.io/oratomic"},
+        "job_board": {"gtm_jobs": 4, "roles": ["Head of Sales", "Account Executive"]},
     }
-    # 45+5+5+30+15+5+10 = 115 -> clamped
+    # 30+10+10 + 15+5+10+5 + 10+5 + 15 = 115 -> clamped
     assert report.score_company(maxed) == 100
 
     assert report.score_company({"name": "G", "funding": [], "hiring": []}) == 0
+
+
+def test_rank_candidates_breaks_ties_by_amount_not_alphabet():
+    small = {"name": "Aardvark", "funding": [_funding_event(company="Aardvark", amount_millions=4.0, round_type="seed")], "hiring": []}
+    big = {"name": "Zenith", "funding": [_funding_event(company="Zenith", amount_millions=60.0, round_type="seed")], "hiring": []}
+    for c in (small, big):
+        c["score"] = report.score_company(c)
+    assert small["score"] == big["score"]  # both in the sweet spot
+    ranked = report.rank_candidates([small, big])
+    # bigger raise = more budget = ranks first, despite alphabet
+    assert [c["name"] for c in ranked] == ["Zenith", "Aardvark"]
+
+
+def test_score_negative_news_penalty():
+    cand = {
+        "name": "H",
+        "funding": [_funding_event(amount_millions=15.0, round_type="series a")],
+        "hiring": [],
+        "negative_news": [{"detail": "H announces layoffs of 20% of staff", "negative": True}],
+    }
+    assert report.score_company(cand) == 20  # 50 - 30: layoffs kill the window
+
+
+# ---------------------------------------------------------------- likely_need
+
+def test_likely_need_exec_gtm():
+    cand = {"name": "A", "funding": [], "hiring": [],
+            "job_board": {"gtm_jobs": 1, "roles": ["Head of Sales"]}}
+    need = report.likely_need(cand)
+    assert "revenue leadership" in need.lower()
+
+
+def test_likely_need_outbound_scaling():
+    cand = {"name": "A", "funding": [], "hiring": [],
+            "job_board": {"gtm_jobs": 2, "roles": ["Account Executive", "SDR"]}}
+    need = report.likely_need(cand)
+    assert "outbound" in need.lower() or "pipeline" in need.lower()
+
+
+def test_likely_need_funded_no_hiring():
+    cand = {"name": "A", "funding": [_funding_event()], "hiring": []}
+    need = report.likely_need(cand)
+    assert "budget" in need.lower()
+
+
+def test_likely_need_hn_only():
+    cand = {"name": "A", "funding": [], "hiring": [_hiring_post()]}
+    assert report.likely_need(cand)  # non-empty for every branch
 
 
 # ---------------------------------------------------------------- why_now / opener
@@ -244,6 +323,7 @@ def test_render_markdown_contains_required_sections():
     assert _REAL_LINK in md  # source link preserved
     assert "https://boards.greenhouse.io/oratomic" in md  # careers link
     assert "**Why now:**" in md
+    assert "**Likely need:**" in md
     assert "**Who to contact:**" in md
     assert "**Suggested opener:**" in md
     # footer: methodology + attribution
@@ -258,7 +338,8 @@ def test_render_csv_rows_columns_and_values():
     assert len(rows) == 2
     expected_cols = [
         "Company", "Score", "Signals", "FundingDetail", "GTMOpenRoles",
-        "Domain", "SourceLinks", "SuggestedContactTitle", "SuggestedOpener",
+        "LikelyNeed", "Domain", "SourceLinks", "SuggestedContactTitle",
+        "SuggestedOpener",
     ]
     for row in rows:
         assert list(row.keys()) == expected_cols
@@ -268,6 +349,7 @@ def test_render_csv_rows_columns_and_values():
     assert ora["Score"] == 100
     assert "funding" in ora["Signals"]
     assert ora["GTMOpenRoles"] == 4
+    assert ora["LikelyNeed"]  # non-empty fit line
     assert _REAL_LINK in ora["SourceLinks"]
     assert ora["SuggestedOpener"]  # non-empty
 

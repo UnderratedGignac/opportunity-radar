@@ -227,6 +227,41 @@ async def fetch_funding_events(days: int = 7, limit: int = 100) -> list[dict]:
     return _dedupe(events)[:limit]
 
 
+_NEGATIVE_PATTERN = re.compile(r"\blayoffs?\b|\blaying off\b|hiring freeze|shuts? down|winding down", re.IGNORECASE)
+
+
+async def negative_signals(company_name: str, days: int = 90) -> list[dict]:
+    """Layoffs / hiring-freeze news for a company — buying-window killers.
+
+    Titles must both match a negative pattern AND name the company, to avoid
+    penalizing companies that merely appear near sector-wide layoff stories.
+    """
+    if not company_name or not company_name.strip():
+        return []
+    url = _google_url(f'"{company_name}" (layoffs OR "hiring freeze") when:{days}d')
+    try:
+        async with aiohttp.ClientSession() as session:
+            text = await _fetch_text(session, url)
+    except Exception as e:
+        logger.warning("Negative-news check failed for %s: %s", company_name, e)
+        return []
+    if not text:
+        return []
+    name_lower = company_name.lower()
+    signals = []
+    for item in _parse_rss_items(text)[:10]:
+        title = item["title"]
+        if name_lower in title.lower() and _NEGATIVE_PATTERN.search(title):
+            signals.append({
+                "signal_type": "news",
+                "detail": title[:140],
+                "source_url": item["link"],
+                "confidence": 0.6,
+                "negative": True,
+            })
+    return signals
+
+
 async def company_news(company_name: str, days: int = 7) -> list[dict]:
     """Per-company Google News check — returns canonical signal dicts."""
     if not company_name or not company_name.strip():

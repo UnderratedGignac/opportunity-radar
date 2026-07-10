@@ -194,3 +194,46 @@ async def test_company_news_survives_fetch_failure():
 
     with patch("scrapers.funding_news._fetch_text", dead_fetch):
         assert await company_news("Anthropic") == []
+
+
+# ---------------------------------------------------------------- negative_signals
+
+_LAYOFF_RSS = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<item><title>Acme announces layoffs of 20% of staff - TechCrunch</title>
+<link>https://example.com/acme-layoffs</link>
+<pubDate>Tue, 07 Jul 2026 10:00:00 GMT</pubDate></item>
+<item><title>OtherCo institutes hiring freeze amid downturn - Reuters</title>
+<link>https://example.com/otherco</link>
+<pubDate>Tue, 07 Jul 2026 11:00:00 GMT</pubDate></item>
+<item><title>Acme launches new product line - PRNewswire</title>
+<link>https://example.com/acme-product</link>
+<pubDate>Tue, 07 Jul 2026 12:00:00 GMT</pubDate></item>
+</channel></rss>"""
+
+
+async def test_negative_signals_matches_company_only():
+    from scrapers.funding_news import negative_signals
+
+    async def fake_fetch(session, url):
+        return _LAYOFF_RSS
+
+    with patch("scrapers.funding_news._fetch_text", fake_fetch):
+        signals = await negative_signals("Acme")
+
+    # only the Acme layoffs item: OtherCo's freeze names a different company,
+    # and the Acme product launch is not negative
+    assert len(signals) == 1
+    assert signals[0]["negative"] is True
+    assert "layoffs" in signals[0]["detail"].lower()
+    assert signals[0]["source_url"] == "https://example.com/acme-layoffs"
+
+
+async def test_negative_signals_survives_fetch_failure():
+    from scrapers.funding_news import negative_signals
+
+    async def dead_fetch(session, url):
+        return None
+
+    with patch("scrapers.funding_news._fetch_text", dead_fetch):
+        assert await negative_signals("Acme") == []
