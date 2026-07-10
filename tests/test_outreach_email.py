@@ -90,3 +90,17 @@ def test_load_teaser_reads_newest_report(tmp_path: Path):
 
 def test_load_teaser_missing_dir(tmp_path: Path):
     assert _load_teaser(tmp_path / "nope") == []
+
+
+def test_guess_emails_ignores_non_address_in_email_column():
+    from send_outreach import _guess_emails
+
+    # data-entry error: a person's name in the Email column must not be
+    # used as a recipient; fall back to website-based guessing
+    row = _row(Email="Jane Doe", Website="tc9.ai", Founder="")
+    emails = _guess_emails(row)
+    assert all("@" in e for e in emails)
+    assert "hello@tc9.ai" in emails
+
+    real = _guess_emails(_row(Email="real@example.com"))
+    assert real == ["real@example.com"]

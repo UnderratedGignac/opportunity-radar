@@ -58,9 +58,9 @@ def _guess_emails(row: dict) -> list[str]:
     """Return ordered list of email addresses to try for a prospect."""
     emails: list[str] = []
 
-    # Use explicit email if provided
+    # Use explicit email if provided (ignore data-entry errors like names)
     explicit = row.get("Email", "").strip()
-    if explicit:
+    if explicit and "@" in explicit and " " not in explicit:
         emails.append(explicit)
         return emails
 
